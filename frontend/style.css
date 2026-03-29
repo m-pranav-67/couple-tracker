@@ -534,14 +534,22 @@ body[data-section="calendar"] .section[data-section-id="calendar"] {
     transition: all 0.2s ease;
 }
 
-.messages-box div:hover {
-    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
-    transform: translateX(2px);
-}
+.messages-box div {
+    margin: 0;
+    padding: 12px 14px;
+    background: white;
+    border-left: 4px solid #667eea;
     border-radius: 10px;
     font-size: 13px;
     word-break: break-word;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
     animation: messageSlide 0.3s ease;
+}
+
+.messages-box div:hover {
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
+    transform: translateX(2px);
 }
 
 @keyframes messageSlide {
