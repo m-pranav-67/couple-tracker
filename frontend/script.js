@@ -13,8 +13,13 @@ let calendar = null;
 const FINISH = 500;
 let gameOver = false;
 
-// Socket
-const socket = io("https://race-tracker-yzon.onrender.com");
+// =====================================
+// 🌐 BASE URL (AUTO PRODUCTION SAFE)
+// =====================================
+const BASE_URL = window.location.origin;
+
+// Socket (IMPORTANT FIX)
+const socket = io();
 socket.emit("join", userId);
 
 // Set welcome
@@ -33,7 +38,7 @@ async function addTask() {
     if (!text) return alert("Enter a task");
 
     try {
-        await fetch("https://race-tracker-yzon.onrender.com/tasks/add", {
+        await fetch(`${BASE_URL}/tasks/add`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, text, date: selectedDate })
@@ -52,7 +57,7 @@ async function addTask() {
 // =====================================
 async function completeTask(index) {
     try {
-        await fetch("https://race-tracker-yzon.onrender.com/tasks/complete", {
+        await fetch(`${BASE_URL}/tasks/complete`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, index })
@@ -69,7 +74,7 @@ async function completeTask(index) {
 // =====================================
 async function deleteTask(index) {
     try {
-        await fetch("https://race-tracker-yzon.onrender.com/tasks/delete", {
+        await fetch(`${BASE_URL}/tasks/delete`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, index })
@@ -86,7 +91,7 @@ async function deleteTask(index) {
 // =====================================
 async function loadTasks() {
     try {
-        const res = await fetch(`https://race-tracker-yzon.onrender.com/tasks/${userId}`);
+        const res = await fetch(`${BASE_URL}/tasks/${userId}`);
         const tasks = await res.json();
 
         const container = document.getElementById("taskList");
@@ -97,6 +102,7 @@ async function loadTasks() {
                 const div = document.createElement("div");
                 const span = document.createElement("span");
                 span.innerText = task.text;
+
                 if (task.completed) {
                     span.style.textDecoration = "line-through";
                 }
@@ -149,7 +155,6 @@ function updateMyCarPosition(tasks) {
         checkWinner(userId, pos);
     }
 
-    // Emit progress to partner
     if (raceData && partnerName) {
         socket.emit("raceProgress", { userId, partnerName, progress: done });
     }
@@ -165,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
         myCar.innerText = "🚗 " + userId;
     }
 
-    // Load race immediately
     setTimeout(() => loadRace(), 100);
 });
 
@@ -193,9 +197,8 @@ function checkWinner(user, position) {
         gameOver = true;
         const text = user === userId ? "🏆 You Win!" : `💔 ${user} Wins!`;
         const winnerEl = document.getElementById("winner");
-        if (winnerEl) {
-            winnerEl.innerText = text;
-        }
+        if (winnerEl) winnerEl.innerText = text;
+
         setTimeout(() => alert(text), 200);
     }
 }
@@ -205,33 +208,16 @@ function checkWinner(user, position) {
 // =====================================
 async function loadRace() {
     try {
-        const res = await fetch(`https://race-tracker-yzon.onrender.com/race/${userId}`);
-        
-        if (!res.ok) {
-            console.error("Fetch failed with status:", res.status);
-            return;
-        }
+        const res = await fetch(`${BASE_URL}/race/${userId}`);
+        const data = await res.json();
 
-        const text = await res.text();
-        let data;
-        
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            console.error("JSON parse error in loadRace:", e, "text:", text);
-            return;
-        }
-
-        if (!data || !data.user1) {
-            console.log("No active race found");
-            return;
-        }
+        if (!data || !data.user1) return;
 
         raceData = data;
         gameOver = false;
         document.getElementById("winner").innerText = "";
 
-        const partner = raceData.user1 === userId ? raceData.user2 : raceData.user1;
+        const partner = data.user1 === userId ? data.user2 : data.user1;
         partnerName = partner;
 
         const partnerCar = document.getElementById("car-partner");
@@ -239,8 +225,6 @@ async function loadRace() {
             partnerCar.id = "car-" + partner;
             partnerCar.innerText = "🚙 " + partner;
         }
-
-        console.log("Race loaded:", { raceData, partner });
 
     } catch (e) {
         console.error("Race load error:", e);
@@ -257,26 +241,13 @@ async function createRace() {
     if (partner === userId) return alert("Cannot race yourself");
 
     try {
-        console.log("Creating race:", { user1: userId, user2: partner });
-
-        const res = await fetch("https://race-tracker-yzon.onrender.com/race/create", {
+        const res = await fetch(`${BASE_URL}/race/create`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user1: userId, user2: partner })
         });
 
-        console.log("Response status:", res.status);
-        const text = await res.text();
-        console.log("Response text:", text);
-
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            console.error("JSON parse error:", e);
-            alert("Server error - invalid response. Check console for details.");
-            return;
-        }
+        const data = await res.json();
 
         if (!res.ok) {
             alert(data.error || "Error creating race");
@@ -302,7 +273,7 @@ function showProgress(tasks) {
     const done = todayTasks.filter(t => t.completed).length;
     const total = todayTasks.length;
 
-    document.getElementById("progress").innerText = 
+    document.getElementById("progress").innerText =
         `${done}/${total} tasks completed`;
 }
 
@@ -311,7 +282,7 @@ function showProgress(tasks) {
 // =====================================
 async function loadOthers() {
     try {
-        const res = await fetch("https://race-tracker-yzon.onrender.com/tasks/all/users");
+        const res = await fetch(`${BASE_URL}/tasks/all/users`);
         const users = await res.json();
 
         const box = document.getElementById("others");
@@ -328,13 +299,14 @@ async function loadOthers() {
             div.innerHTML = `<span>#${idx + 1} ${u.userId}</span><span>${done} done</span>`;
             box.appendChild(div);
         });
+
     } catch (e) {
         console.error("Leaderboard error:", e);
     }
 }
 
 // =====================================
-// 💬 CHAT - PUBLIC
+// 💬 CHAT
 // =====================================
 function sendPublic() {
     const msg = document.getElementById("publicMsg").value;
@@ -348,21 +320,6 @@ socket.on("publicMessage", (data) => {
     const div = document.createElement("div");
     div.innerHTML = `<b>${data.sender}:</b> ${data.msg}`;
     document.getElementById("publicMessages").appendChild(div);
-});
-
-// =====================================
-// 💬 CHAT - PRIVATE
-// =====================================
-socket.on("onlineUsers", (users) => {
-    const usersBox = document.getElementById("users");
-    usersBox.innerHTML = "";
-    users.forEach(user => {
-        if (user !== userId) {
-            const div = document.createElement("div");
-            div.innerText = user;
-            usersBox.appendChild(div);
-        }
-    });
 });
 
 function sendMsg() {
@@ -382,52 +339,11 @@ socket.on("receiveMessage", (data) => {
 });
 
 // =====================================
-// 📅 CALENDAR
+// 🚀 INIT
 // =====================================
-document.addEventListener("DOMContentLoaded", function () {
-    const calendarEl = document.getElementById("calendar");
-    if (!calendarEl) return;
-
-    calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        dateClick: function(info) {
-            selectedDate = info.dateStr;
-            loadTasks();
-        }
-    });
-
-    calendar.render();
-    setTimeout(() => {
-        if (calendar) calendar.updateSize();
-    }, 100);
-});
-
-function updateCalendar(tasks) {
-    if (!calendar) return;
-
-    calendar.removeAllEvents();
-    tasks.forEach(task => {
-        calendar.addEvent({
-            title: task.text,
-            start: task.date,
-            color: task.completed ? "#667eea" : "#ff6b6b"
-        });
-    });
-}
-
-// =====================================
-// 🚀 INITIALIZE
-// =====================================
-async function init() {
-    try {
-        await loadRace();
-        await loadTasks();
-    } catch (e) {
-        console.error("Init error:", e);
-    }
-}
-
-// Run init after DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => init(), 200);
+    setTimeout(() => {
+        loadRace();
+        loadTasks();
+    }, 200);
 });
