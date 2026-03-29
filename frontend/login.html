@@ -74,7 +74,7 @@ async function register() {
         return;
     }
 
-    const res = await fetch("http://localhost:5000/auth/register", {
+    const res = await fetch("https://race-tracker-yzon.onrender.com/auth/register", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ username, password })
@@ -93,7 +93,7 @@ async function login() {
         return;
     }
 
-    const res = await fetch("http://localhost:5000/auth/login", {
+    const res = await fetch("https://race-tracker-yzon.onrender.com/auth/login", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ username, password })

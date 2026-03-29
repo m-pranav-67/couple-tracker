@@ -14,7 +14,7 @@ const FINISH = 500;
 let gameOver = false;
 
 // Socket
-const socket = io("http://localhost:5000");
+const socket = io("https://race-tracker-yzon.onrender.com");
 socket.emit("join", userId);
 
 // Set welcome
@@ -33,7 +33,7 @@ async function addTask() {
     if (!text) return alert("Enter a task");
 
     try {
-        await fetch("http://localhost:5000/tasks/add", {
+        await fetch("https://race-tracker-yzon.onrender.com/tasks/add", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, text, date: selectedDate })
@@ -52,7 +52,7 @@ async function addTask() {
 // =====================================
 async function completeTask(index) {
     try {
-        await fetch("http://localhost:5000/tasks/complete", {
+        await fetch("https://race-tracker-yzon.onrender.com/tasks/complete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, index })
@@ -69,7 +69,7 @@ async function completeTask(index) {
 // =====================================
 async function deleteTask(index) {
     try {
-        await fetch("http://localhost:5000/tasks/delete", {
+        await fetch("https://race-tracker-yzon.onrender.com/tasks/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, index })
@@ -86,7 +86,7 @@ async function deleteTask(index) {
 // =====================================
 async function loadTasks() {
     try {
-        const res = await fetch(`http://localhost:5000/tasks/${userId}`);
+        const res = await fetch(`https://race-tracker-yzon.onrender.com/tasks/${userId}`);
         const tasks = await res.json();
 
         const container = document.getElementById("taskList");
@@ -205,7 +205,7 @@ function checkWinner(user, position) {
 // =====================================
 async function loadRace() {
     try {
-        const res = await fetch(`http://localhost:5000/race/${userId}`);
+        const res = await fetch(`https://race-tracker-yzon.onrender.com/race/${userId}`);
         
         if (!res.ok) {
             console.error("Fetch failed with status:", res.status);
@@ -259,7 +259,7 @@ async function createRace() {
     try {
         console.log("Creating race:", { user1: userId, user2: partner });
 
-        const res = await fetch("http://localhost:5000/race/create", {
+        const res = await fetch("https://race-tracker-yzon.onrender.com/race/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user1: userId, user2: partner })
@@ -311,7 +311,7 @@ function showProgress(tasks) {
 // =====================================
 async function loadOthers() {
     try {
-        const res = await fetch("http://localhost:5000/tasks/all/users");
+        const res = await fetch("https://race-tracker-yzon.onrender.com/tasks/all/users");
         const users = await res.json();
 
         const box = document.getElementById("others");
