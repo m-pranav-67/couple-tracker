@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Couple Tracker - Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Calendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+</head>
+
+<body data-section="home">
+
+<!-- 🧭 NAVBAR -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <h1>🏁 Couple Tracker</h1>
+    </div>
+    <div class="navbar-menu">
+        <button class="nav-btn" data-section="home" onclick="navigateTo('home')">🏠 Home</button>
+        <button class="nav-btn" data-section="race" onclick="navigateTo('race')">🏁 Race</button>
+        <button class="nav-btn" data-section="leaderboard" onclick="navigateTo('leaderboard')">📊 Leaderboard</button>
+        <button class="nav-btn" data-section="chat" onclick="navigateTo('chat')">💬 Chat</button>
+        <button class="nav-btn" data-section="calendar" onclick="navigateTo('calendar')">📅 Calendar</button>
+        <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+    </div>
+</nav>
+
+<!-- 🏠 HOME SECTION -->
+<section class="section" data-section-id="home">
+    <div class="section-header">
+        <h2>🏠 Home</h2>
+        <p id="welcome" class="welcome-text"></p>
+    </div>
+
+    <div class="card card-add-task">
+        <h3>➕ Add New Task</h3>
+        <div class="input-group">
+            <input id="taskInput" placeholder="Enter task" class="input-field">
+            <button onclick="addTask()" class="btn btn-primary">Add Task</button>
+        </div>
+    </div>
+
+    <div class="tasks-grid">
+        <div class="card">
+            <h3>📋 Today's Tasks</h3>
+            <div id="taskList" class="task-list"></div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Your Progress</h3>
+            <div id="progress" class="progress"></div>
+        </div>
+    </div>
+</section>
+
+<!-- 🏁 RACE SECTION -->
+<section class="section" data-section-id="race">
+    <div class="section-header">
+        <h2>🏁 Race Track</h2>
+    </div>
+
+    <div class="card card-race-start">
+        <h3>🏁 Start a New Race</h3>
+        <div class="input-group">
+            <input id="partner" placeholder="Enter partner username" class="input-field">
+            <button onclick="createRace()" class="btn btn-primary">Start Race</button>
+        </div>
+    </div>
+
+    <div class="card card-race-track">
+        <h3>Race Track</h3>
+        <div class="race">
+            <!-- Finish line -->
+            <div class="finish-line"></div>
+
+            <!-- Your car -->
+            <div id="car-user" class="car car-user"></div>
+
+            <!-- Partner car -->
+            <div id="car-partner" class="car car-partner"></div>
+        </div>
+
+        <!-- Winner Banner -->
+        <div id="winner" class="winner-banner"></div>
+    </div>
+</section>
+
+<!-- 📊 LEADERBOARD SECTION -->
+<section class="section" data-section-id="leaderboard">
+    <div class="section-header">
+        <h2>📊 Leaderboard</h2>
+    </div>
+
+    <div class="card">
+        <div id="others" class="leaderboard"></div>
+    </div>
+</section>
+
+<!-- 💬 CHAT SECTION -->
+<section class="section" data-section-id="chat">
+    <div class="section-header">
+        <h2>💬 Chat</h2>
+    </div>
+
+    <div class="chat-grid">
+        <!-- Public Chat -->
+        <div class="card card-chat">
+            <h3>🌐 Public Chat</h3>
+            <div id="publicMessages" class="messages-box"></div>
+            <div class="input-group">
+                <input id="publicMsg" placeholder="Message everyone" class="input-field">
+                <button onclick="sendPublic()" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+
+        <!-- Private Chat -->
+        <div class="card card-chat">
+            <h3>💬 Private Chat</h3>
+            
+            <div class="users-box">
+                <strong>Online Users:</strong>
+                <div id="users" class="users-list"></div>
+            </div>
+
+            <div id="messages" class="messages-box"></div>
+
+            <div class="input-group">
+                <input id="receiver" placeholder="Username" class="input-field">
+                <input id="msg" placeholder="Message" class="input-field">
+                <button onclick="sendMsg()" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 📅 CALENDAR SECTION -->
+<section class="section" data-section-id="calendar">
+    <div class="section-header">
+        <h2>📅 Calendar</h2>
+    </div>
+
+    <div class="card card-calendar">
+        <div id="calendar" class="calendar"></div>
+    </div>
+</section>
+
+<!-- SOCKET.IO -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<!-- NAVIGATION SCRIPT -->
+<script>
+function navigateTo(section) {
+    document.body.setAttribute("data-section", section);
+    
+    // Update active nav button
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
+    document.querySelector(`[data-section="${section}"]`).classList.add("active");
+
+    // Fix calendar rendering
+    if (section === "calendar" && window.calendar) {
+        setTimeout(() => calendar.updateSize(), 100);
+    }
+}
+
+function logout() {
+    localStorage.removeItem("userId");
+    window.location.href = "login.html";
+}
+
+// Set initial active button
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelector('[data-section="home"]').classList.add("active");
+});
+</script>
+
+<!-- MAIN SCRIPT -->
+<script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,643 @@
+/* ==================== GLOBAL STYLES ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    min-height: 100vh;
+    padding-bottom: 40px;
+}
+
+/* ==================== NAVBAR ==================== */
+.navbar {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.navbar-brand h1 {
+    font-size: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.navbar-menu {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.nav-btn {
+    background: #f0f0f0;
+    color: #333;
+    border: 2px solid transparent;
+    padding: 10px 18px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.nav-btn:hover {
+    background: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.nav-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.nav-btn.logout {
+    background: #ff6b6b;
+    color: white;
+    margin-left: auto;
+}
+
+.nav-btn.logout:hover {
+    background: #ff5252;
+    transform: translateY(-2px);
+}
+
+/* ==================== SECTIONS ==================== */
+.section {
+    display: none;
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 0 20px;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+body[data-section="home"] .section[data-section-id="home"],
+body[data-section="race"] .section[data-section-id="race"],
+body[data-section="leaderboard"] .section[data-section-id="leaderboard"],
+body[data-section="chat"] .section[data-section-id="chat"],
+body[data-section="calendar"] .section[data-section-id="calendar"] {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-header {
+    margin-bottom: 30px;
+    animation: slideDown 0.5s ease;
+}
+
+.section-header h2 {
+    font-size: 32px;
+    color: white;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.welcome-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================== CARDS ==================== */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+.card h3 {
+    font-size: 18px;
+    margin-bottom: 18px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-add-task {
+    border: 2px dashed #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.card-race-start {
+    border: 2px dashed #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.card-race-track {
+    min-height: 300px;
+}
+
+.card-chat {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-calendar {
+    min-height: 700px;
+}
+
+/* ==================== LAYOUT GRIDS ==================== */
+.tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.chat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+/* ==================== INPUT & BUTTONS ==================== */
+.input-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.input-field {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* ==================== TASKS ==================== */
+.task-list {
+    min-height: 350px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.task-list div {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 14px 16px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-list div:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.task-list span {
+    flex: 1;
+}
+
+.task-list button {
+    padding: 6px 12px;
+    font-size: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* ==================== PROGRESS ==================== */
+.progress {
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* ==================== RACE TRACK ==================== */
+.race {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(90deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin: 20px 0;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #ddd;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.finish-line {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 5px;
+    background: repeating-linear-gradient(45deg, #ff6b6b, #ff6b6b 10px, #fff 10px, #fff 20px);
+    z-index: 10;
+}
+
+.car {
+    position: absolute;
+    left: 0;
+    font-size: 30px;
+    transition: transform 0.5s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    white-space: nowrap;
+}
+
+.car-user {
+    top: 15px;
+}
+
+.car-partner {
+    top: 65px;
+}
+
+.winner-banner {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    margin-top: 15px;
+}
+
+/* ==================== LEADERBOARD ==================== */
+.leaderboard {
+    display: grid;
+    gap: 12px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.leaderboard div {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.leaderboard div:hover {
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* ==================== CHAT ==================== */
+.messages-box {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    min-height: 250px;
+}
+
+.messages-box div {
+    margin: 10px 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+    animation: messageSlide 0.3s ease;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#publicMessages div {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: auto;
+}
+
+#messages div {
+    background: #e3f2fd;
+    color: #1a1a1a;
+}
+
+.users-box {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #f0f0f0;
+    border-radius: 8px;
+}
+
+.users-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+#users div {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1a1a1a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#users div:hover {
+    transform: scale(1.05);
+}
+
+/* ==================== CALENDAR ==================== */
+.calendar {
+    min-height: 650px;
+    padding: 5px;
+}
+
+.fc {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+.fc-header-toolbar {
+    padding: 15px 20px !important;
+    margin-bottom: 0 !important;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    border-bottom: 1px solid #e8e8e8;
+    border-radius: 12px 12px 0 0;
+}
+
+.fc-toolbar-title {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+}
+
+.fc .fc-button-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
+}
+
+.fc .fc-button-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3f92 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+}
+
+.fc .fc-daygrid {
+    border: 1px solid #e8e8e8 !important;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+}
+
+.fc .fc-daygrid-day {
+    background-color: #fff !important;
+    border-color: #f0f0f0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.fc .fc-daygrid-day:hover {
+    background-color: #f8f9ff !important;
+    transform: scale(1.01);
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(102, 126, 234, 0.05) !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    border-radius: 6px;
+    padding: 4px 8px !important;
+    width: fit-content;
+}
+
+.fc-col-header-cell {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+    border-color: #e8e8e8 !important;
+    padding: 12px 0 !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.fc-event {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 2px 4px !important;
+    font-size: 12px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2) !important;
+}
+
+.fc-event:hover {
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fc-event-title {
+    font-weight: 600 !important;
+    color: white !important;
+}
+
+.fc .fc-daygrid-day-frame {
+    min-height: 100px !important;
+}
+
+.fc-highlight {
+    background: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* ==================== SCROLLBAR ==================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3f92 100%);
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 12px 15px;
+    }
+
+    .navbar-brand h1 {
+        font-size: 20px;
+    }
+
+    .navbar-menu {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav-btn.logout {
+        margin-left: 0;
+    }
+
+    .section-header h2 {
+        font-size: 24px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .input-group {
+        flex-direction: column;
+    }
+
+    .input-field {
+        min-width: 100%;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .tasks-grid,
+    .chat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #publicMessages div,
+    #messages div {
+        max-width: 100%;
+    }
+}

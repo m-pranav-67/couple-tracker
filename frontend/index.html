@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="center">
+
+<div class="card">
+    <h1>❤️ Couple Tracker</h1>
+
+    <input id="userId" placeholder="Enter your name">
+    <button onclick="login()">Login</button>
+</div>
+
+<script>
+function login() {
+    const id = document.getElementById("userId").value;
+
+    if (!id) {
+        alert("Enter your name");
+        return;
+    }
+
+    localStorage.setItem("userId", id);
+    window.location = "dashboard.html";
+}
+</script>
+
+</body>
+</html>
