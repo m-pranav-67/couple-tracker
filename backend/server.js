@@ -35,7 +35,7 @@ app.use("/race", require("./routes/raceRoutes"));
 // =======================
 // DATABASE
 // =======================
-mongoose.connect("mongodb://127.0.0.1:27017/coupleTracker")
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB Connected"))
     .catch(err => console.log("Mongo Error:", err));
 
