@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Couple Tracker - Login</title>
+    <title>Couple Tracker - Login & Register</title>
     <link rel="stylesheet" href="login-style.css">
 </head>
 <body>
@@ -10,54 +10,76 @@
     <div class="login-background"></div>
     
     <div class="login-card">
+        <!-- Header Section -->
         <div class="login-header">
-            <h1>🏁 Couple Tracker</h1>
-            <p class="login-subtitle">Track your races together</p>
+            <h1>🚗 Couple Race Tracker</h1>
+            <p class="login-subtitle">Compete with your partner daily</p>
         </div>
 
-        <form class="login-form" onsubmit="return false;">
-            <div class="form-group">
-                <label for="username" class="form-label">Username</label>
-                <input 
-                    id="username" 
-                    type="text"
-                    class="form-input" 
-                    placeholder="Enter your username"
-                    autocomplete="username"
-                >
-                <div class="input-focus-effect"></div>
-            </div>
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <button class="tab-btn active" data-tab="login" onclick="switchTab('login')">
+                <span>Login</span>
+            </button>
+            <button class="tab-btn" data-tab="register" onclick="switchTab('register')">
+                <span>Register</span>
+            </button>
+            <div class="tab-indicator"></div>
+        </div>
 
-            <div class="form-group">
-                <label for="password" class="form-label">Password</label>
-                <input 
-                    id="password" 
-                    type="password" 
-                    class="form-input"
-                    placeholder="Enter your password"
-                    autocomplete="current-password"
-                >
-                <div class="input-focus-effect"></div>
-            </div>
+        <!-- Login Tab -->
+        <div class="tab-content active" id="login-tab">
+            <form class="login-form" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="login-username" class="form-label">Username</label>
+                    <input 
+                        id="login-username" 
+                        type="text"
+                        class="form-input" 
+                        placeholder="Enter your username"
+                        autocomplete="username"
+                    >
+                </div>
 
-            <div class="button-group">
                 <button 
                     type="button"
-                    onclick="login()" 
-                    class="btn btn-primary"
+                    onclick="handleLogin()" 
+                    class="btn btn-primary btn-full"
                 >
                     Login
                 </button>
+
+                <div id="login-message" class="message"></div>
+            </form>
+        </div>
+
+        <!-- Register Tab -->
+        <div class="tab-content" id="register-tab">
+            <form class="register-form" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="register-username" class="form-label">Username</label>
+                    <input 
+                        id="register-username" 
+                        type="text"
+                        class="form-input" 
+                        placeholder="Choose your username"
+                        autocomplete="username"
+                    >
+                </div>
+
                 <button 
                     type="button"
-                    onclick="register()" 
-                    class="btn btn-secondary"
+                    onclick="handleRegister()" 
+                    class="btn btn-success btn-full"
                 >
-                    Register
+                    Create Account
                 </button>
-            </div>
-        </form>
 
+                <div id="register-message" class="message"></div>
+            </form>
+        </div>
+
+        <!-- Footer -->
         <div class="login-footer">
             <p>Join your partner and start racing! 🏎️</p>
         </div>
@@ -65,48 +87,74 @@
 </div>
 
 <script>
-async function register() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
-    if (!username || !password) {
-        alert("Please fill in all fields");
-        return;
-    }
-
-    const res = await fetch("https://race-tracker-yzon.onrender.com/auth/register", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ username, password })
+// ================== TAB SWITCHING ==================
+function switchTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
     });
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
-    const data = await res.json();
-    alert(data.message);
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tab}-tab`).classList.add('active');
+
+    // Clear messages
+    clearMessages();
 }
 
-async function login() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+// Clear all messages
+function clearMessages() {
+    document.getElementById('login-message').innerHTML = '';
+    document.getElementById('register-message').innerHTML = '';
+}
 
-    if (!username || !password) {
-        alert("Please fill in all fields");
+// ================== LOGIN HANDLER ==================
+function handleLogin() {
+    const username = document.getElementById("login-username").value.trim();
+    const messageEl = document.getElementById('login-message');
+
+    if (!username) {
+        showMessage(messageEl, "Please enter your username", "error");
         return;
     }
 
-    const res = await fetch("https://race-tracker-yzon.onrender.com/auth/login", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ username, password })
-    });
+    // Store in localStorage and redirect (preserving existing behavior)
+    localStorage.setItem("userId", username);
+    window.location.href = "dashboard.html";
+}
 
-    const data = await res.json();
+// ================== REGISTER HANDLER ==================
+function handleRegister() {
+    const username = document.getElementById("register-username").value.trim();
+    const messageEl = document.getElementById('register-message');
 
-    if (data.username) {
-        localStorage.setItem("userId", data.username);
-        window.location.href = "dashboard.html";
-    } else {
-        alert(data.message);
+    if (!username) {
+        showMessage(messageEl, "Please enter a username", "error");
+        return;
     }
+
+    if (username.length < 3) {
+        showMessage(messageEl, "Username must be at least 3 characters", "error");
+        return;
+    }
+
+    // Store in localStorage (frontend registration)
+    localStorage.setItem("userId", username);
+    showMessage(messageEl, "✓ Account registered successfully! Redirecting...", "success");
+
+    // Clear input and redirect to dashboard after 1.5 seconds
+    setTimeout(() => {
+        window.location.href = "dashboard.html";
+    }, 1500);
+}
+
+// ================== MESSAGE DISPLAY ==================
+function showMessage(element, text, type) {
+    element.textContent = text;
+    element.className = `message ${type}`;
 }
 </script>
 

@@ -21,30 +21,34 @@ body {
 /* ==================== NAVBAR ==================== */
 .navbar {
     background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     position: sticky;
     top: 0;
     z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 30px;
+    padding: 18px 30px;
     gap: 30px;
     flex-wrap: wrap;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .navbar-brand h1 {
-    font-size: 24px;
+    font-size: 26px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .navbar-menu {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -53,24 +57,26 @@ body {
     background: #f0f0f0;
     color: #333;
     border: 2px solid transparent;
-    padding: 10px 18px;
+    padding: 11px 18px;
     border-radius: 25px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
 }
 
 .nav-btn:hover {
-    background: #e0e0e0;
+    background: #e8e8e8;
     transform: translateY(-2px);
 }
 
 .nav-btn.active {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
 }
 
 .nav-btn.logout {
@@ -82,15 +88,16 @@ body {
 .nav-btn.logout:hover {
     background: #ff5252;
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.35);
 }
 
 /* ==================== SECTIONS ==================== */
 .section {
     display: none;
     max-width: 1400px;
-    margin: 30px auto;
+    margin: 35px auto;
     padding: 0 20px;
-    animation: fadeIn 0.4s ease-in-out;
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body[data-section="home"] .section[data-section-id="home"],
@@ -113,21 +120,24 @@ body[data-section="calendar"] .section[data-section-id="calendar"] {
 }
 
 .section-header {
-    margin-bottom: 30px;
+    margin-bottom: 35px;
     animation: slideDown 0.5s ease;
 }
 
 .section-header h2 {
-    font-size: 32px;
+    font-size: 36px;
     color: white;
-    margin-bottom: 10px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 12px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .welcome-text {
     color: rgba(255, 255, 255, 0.9);
     font-size: 16px;
     font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 @keyframes slideDown {
@@ -145,104 +155,141 @@ body[data-section="calendar"] .section[data-section-id="calendar"] {
 .card {
     background: white;
     border-radius: 16px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
 }
 
 .card h3 {
     font-size: 18px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     color: #333;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
 }
 
 .card-add-task {
     border: 2px dashed #667eea;
-    background: rgba(102, 126, 234, 0.05);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
 
 .card-race-start {
     border: 2px dashed #667eea;
-    background: rgba(102, 126, 234, 0.05);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
 
 .card-race-track {
-    min-height: 300px;
+    min-height: 320px;
 }
 
 .card-chat {
     display: flex;
     flex-direction: column;
+    min-height: 500px;
 }
 
 .card-calendar {
-    min-height: 700px;
+    min-height: 750px;
 }
 
 /* ==================== LAYOUT GRIDS ==================== */
 .tasks-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 22px;
 }
 
 .chat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 22px;
 }
 
 /* ==================== INPUT & BUTTONS ==================== */
 .input-group {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .input-field {
     flex: 1;
     min-width: 200px;
-    padding: 12px 16px;
+    padding: 13px 16px;
     border: 2px solid #e0e0e0;
     border-radius: 10px;
     font-size: 14px;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: inherit;
+    background: #f9f9f9;
+}
+
+.input-field::placeholder {
+    color: #aaa;
 }
 
 .input-field:focus {
     outline: none;
     border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.input-field:hover {
+    border-color: #ccc;
+    background: white;
 }
 
 .btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 12px 24px;
+    padding: 13px 26px;
     border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 .btn:active {
@@ -258,36 +305,69 @@ body[data-section="calendar"] .section[data-section-id="calendar"] {
     min-height: 350px;
     max-height: 500px;
     overflow-y: auto;
-    padding-right: 10px;
+    padding-right: 12px;
+}
+
+.task-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
 }
 
 .task-list div {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf5 100%);
     padding: 14px 16px;
     margin: 10px 0;
     border-radius: 10px;
-    border-left: 4px solid #667eea;
-    transition: all 0.3s ease;
+    border-left: 5px solid #667eea;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
 .task-list div:hover {
-    transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    transform: translateX(6px);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
 }
 
 .task-list span {
     flex: 1;
+    font-weight: 500;
+    color: #333;
 }
 
 .task-list button {
-    padding: 6px 12px;
+    padding: 7px 14px;
     font-size: 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.task-list button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 /* ==================== PROGRESS ==================== */
@@ -297,110 +377,170 @@ body[data-section="calendar"] .section[data-section-id="calendar"] {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-size: 18px;
-    font-weight: 600;
-    color: #667eea;
+    font-size: 48px;
+    font-weight: 700;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+}
+
+.progress span {
+    font-size: 42px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* ==================== RACE TRACK ==================== */
 .race {
     width: 100%;
-    height: 120px;
-    background: linear-gradient(90deg, #f5f7fa 0%, #c3cfe2 100%);
-    margin: 20px 0;
+    height: 140px;
+    background: linear-gradient(90deg, #f5f7fa 0%, #e8ebf5 100%);
+    margin: 25px 0;
     position: relative;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    border: 2px solid #ddd;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e0e0e0;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .finish-line {
     position: absolute;
-    right: 0;
+    right: 2px;
     top: 0;
     height: 100%;
-    width: 5px;
+    width: 6px;
     background: repeating-linear-gradient(45deg, #ff6b6b, #ff6b6b 10px, #fff 10px, #fff 20px);
     z-index: 10;
+    box-shadow: -2px 0 8px rgba(255, 107, 107, 0.3);
 }
 
 .car {
     position: absolute;
-    left: 0;
-    font-size: 30px;
-    transition: transform 0.5s ease;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    left: 10px;
+    font-size: 36px;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
     white-space: nowrap;
 }
 
 .car-user {
-    top: 15px;
+    top: 20px;
 }
 
 .car-partner {
-    top: 65px;
+    top: 72px;
 }
 
 .winner-banner {
     text-align: center;
-    padding: 15px;
+    padding: 18px;
     background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 18px;
-    font-weight: bold;
-    min-height: 50px;
+    font-weight: 700;
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1a1a1a;
-    margin-top: 15px;
+    color: #0d47a1;
+    margin-top: 18px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
 }
 
 /* ==================== LEADERBOARD ==================== */
 .leaderboard {
     display: grid;
-    gap: 12px;
-    max-height: 600px;
+    gap: 14px;
+    max-height: 650px;
     overflow-y: auto;
     padding-right: 10px;
+}
+
+.leaderboard::-webkit-scrollbar {
+    width: 6px;
+}
+
+.leaderboard::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.leaderboard::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
 }
 
 .leaderboard div {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 16px;
-    border-radius: 10px;
+    padding: 18px;
+    border-radius: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+    font-weight: 600;
+    letter-spacing: 0.3px;
 }
 
 .leaderboard div:hover {
-    transform: translateX(4px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    transform: translateX(8px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 /* ==================== CHAT ==================== */
 .messages-box {
     flex: 1;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
     overflow-y: auto;
     background: #f9f9f9;
-    min-height: 250px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.messages-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.messages-box::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
 }
 
 .messages-box div {
-    margin: 10px 0;
+    margin: 0;
     padding: 12px 14px;
+    background: white;
+    border-left: 4px solid #667eea;
+    border-radius: 6px;
+    font-size: 13px;
+    word-break: break-word;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+}
+
+.messages-box div:hover {
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
+    transform: translateX(2px);
+}
     border-radius: 10px;
-    max-width: 80%;
-    word-wrap: break-word;
+    font-size: 13px;
+    word-break: break-word;
     animation: messageSlide 0.3s ease;
 }
 
@@ -419,45 +559,57 @@ body[data-section="calendar"] .section[data-section-id="calendar"] {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     margin-left: auto;
+    border-left-color: white;
 }
 
 #messages div {
-    background: #e3f2fd;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     color: #1a1a1a;
+    border-left-color: #2196F3;
 }
 
 .users-box {
-    margin-bottom: 15px;
-    padding: 12px;
-    background: #f0f0f0;
-    border-radius: 8px;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+.users-box strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: 700;
 }
 
 .users-list {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 10px;
 }
 
 #users div {
     background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-    color: #1a1a1a;
-    padding: 6px 12px;
+    color: #0d47a1;
+    padding: 8px 14px;
     border-radius: 20px;
     font-size: 12px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(17, 153, 142, 0.2);
+    letter-spacing: 0.3px;
 }
 
 #users div:hover {
-    transform: scale(1.05);
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
 }
 
 /* ==================== CALENDAR ==================== */
 .calendar {
-    min-height: 650px;
-    padding: 5px;
+    min-height: 680px;
+    padding: 8px;
 }
 
 .fc {

@@ -75,7 +75,7 @@ body {
 /* ==================== LOGIN HEADER ==================== */
 .login-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 35px;
     animation: fadeInDown 0.7s ease-out;
 }
 
@@ -108,9 +108,61 @@ body {
     }
 }
 
+/* ==================== TAB NAVIGATION ==================== */
+.tab-container {
+    display: flex;
+    gap: 0;
+    margin-bottom: 30px;
+    position: relative;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    position: relative;
+    z-index: 2;
+    border-radius: 8px;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+}
+
+.tab-btn.active {
+    color: white;
+}
+
+.tab-indicator {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    height: calc(100% - 8px);
+    width: calc(50% - 4px);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    transition: left 0.3s ease;
+    z-index: 1;
+}
+
+.tab-btn[data-tab="register"].active ~ .tab-indicator {
+    left: calc(50% + 4px);
+}
+
 /* ==================== FORM STYLING ==================== */
-.login-form {
+.login-form,
+.register-form {
     width: 100%;
+    animation: fadeInUp 0.6s ease-out;
 }
 
 .form-group {
@@ -122,10 +174,6 @@ body {
 
 .form-group:nth-child(1) {
     animation-delay: 0.1s;
-}
-
-.form-group:nth-child(2) {
-    animation-delay: 0.2s;
 }
 
 @keyframes fadeInUp {
@@ -178,123 +226,127 @@ body {
     background: white;
 }
 
-.input-focus-effect {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    transition: width 0.3s ease;
-    border-radius: 2px;
-}
-
-.form-input:focus ~ .input-focus-effect {
-    width: 100%;
-}
-
-/* ==================== BUTTON GROUP ==================== */
-.button-group {
-    display: flex;
-    gap: 12px;
-    margin-top: 32px;
-    animation: fadeInUp 0.6s ease-out 0.3s both;
-}
-
 /* ==================== BUTTONS ==================== */
 .btn {
-    flex: 1;
-    padding: 13px 24px;
+    width: 100%;
+    padding: 14px 24px;
     border: none;
     border-radius: 10px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    white-space: nowrap;
-    position: relative;
-    overflow: hidden;
 }
 
-.btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
+.btn-full {
     width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.2);
-    transition: left 0.3s ease;
-    z-index: -1;
-}
-
-.btn:hover::before {
-    left: 100%;
 }
 
 .btn-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 .btn-primary:active {
     transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
 }
 
-.btn-secondary {
-    background: #f0f0f0;
-    color: #333;
-    border: 2px solid #e0e0e0;
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
 }
 
-.btn-secondary:hover {
-    background: white;
-    border-color: #667eea;
-    color: #667eea;
+.btn-success:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 8px 24px rgba(17, 153, 142, 0.4);
 }
 
-.btn-secondary:active {
+.btn-success:active {
     transform: translateY(0);
+}
+
+/* ==================== TAB CONTENT ==================== */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================== MESSAGES ==================== */
+.message {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    min-height: 20px;
+    animation: slideInDown 0.3s ease-out;
+}
+
+.message.error {
+    background: #ffe0e0;
+    color: #d32f2f;
+    border-left: 4px solid #d32f2f;
+}
+
+.message.success {
+    background: #e0f7e0;
+    color: #388e3c;
+    border-left: 4px solid #388e3c;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ==================== LOGIN FOOTER ==================== */
 .login-footer {
     text-align: center;
-    margin-top: 28px;
-    padding-top: 24px;
-    border-top: 1px solid #f0f0f0;
-    animation: fadeInUp 0.6s ease-out 0.4s both;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    color: #999;
+    font-size: 13px;
+    animation: fadeInUp 0.8s ease-out;
 }
 
 .login-footer p {
-    color: #888;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-/* ==================== INPUT AUTOFILL STYLING ==================== */
-.form-input:-webkit-autofill,
-.form-input:-webkit-autofill:hover,
-.form-input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 30px white inset !important;
-    -webkit-text-fill-color: #333 !important;
+    margin: 0;
 }
 
 /* ==================== RESPONSIVE DESIGN ==================== */
 @media (max-width: 480px) {
     .login-card {
-        padding: 40px 25px;
+        padding: 40px 24px;
         border-radius: 16px;
     }
 
@@ -302,28 +354,17 @@ body {
         font-size: 28px;
     }
 
-    .login-header {
-        margin-bottom: 32px;
+    .login-subtitle {
+        font-size: 13px;
     }
 
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .button-group {
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 28px;
+    .form-input {
+        font-size: 16px;  /* Prevents zoom on iOS */
     }
 
     .btn {
         padding: 12px 20px;
-        font-size: 14px;
-    }
-
-    .login-footer {
-        margin-top: 24px;
-        padding-top: 20px;
+        font-size: 13px;
     }
 }
 
@@ -371,35 +412,15 @@ body {
         box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
     }
 
-    .btn-secondary {
-        background: #2a2a2a;
-        color: #f0f0f0;
-        border-color: #444;
+    .tab-btn {
+        color: #aaa;
     }
 
-    .btn-secondary:hover {
-        background: #333;
-        border-color: #667eea;
+    .tab-btn:hover {
         color: #667eea;
     }
 
     .login-footer {
         border-top-color: #333;
-    }
-}
-
-/* ==================== PRINT STYLES ==================== */
-@media print {
-    body {
-        background: white;
-    }
-
-    .login-background {
-        display: none;
-    }
-
-    .login-card {
-        box-shadow: none;
-        page-break-inside: avoid;
     }
 }
