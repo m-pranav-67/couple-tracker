@@ -14,6 +14,14 @@
 
 <body data-section="home">
 
+<!-- LOGIN CHECK (Redirect if not logged in) -->
+<script>
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+        window.location.href = "index.html";
+    }
+</script>
+
 <!-- 🧭 NAVBAR -->
 <nav class="navbar">
     <div class="navbar-brand">

@@ -249,8 +249,9 @@ async function createRace() {
 
         const data = await res.json();
 
-        if (!res.ok) {
+        if (!res.ok || data.error) {
             alert(data.error || "Error creating race");
+            console.error("Race creation error:", data);
             return;
         }
 
@@ -273,8 +274,10 @@ function showProgress(tasks) {
     const done = todayTasks.filter(t => t.completed).length;
     const total = todayTasks.length;
 
-    document.getElementById("progress").innerText =
-        `${done}/${total} tasks completed`;
+    const progressEl = document.getElementById("progress");
+    if (progressEl) {
+        progressEl.innerHTML = `<span>${done}/${total} tasks completed</span>`;
+    }
 }
 
 // =====================================
@@ -320,6 +323,8 @@ socket.on("publicMessage", (data) => {
     const div = document.createElement("div");
     div.innerHTML = `<b>${data.sender}:</b> ${data.msg}`;
     document.getElementById("publicMessages").appendChild(div);
+    // Auto scroll to latest message
+    document.getElementById("publicMessages").scrollTop = document.getElementById("publicMessages").scrollHeight;
 });
 
 function sendMsg() {
@@ -336,7 +341,84 @@ socket.on("receiveMessage", (data) => {
     const div = document.createElement("div");
     div.innerHTML = `<b>${data.sender}:</b> ${data.msg}`;
     document.getElementById("messages").appendChild(div);
+    // Auto scroll to latest message
+    document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
 });
+
+// =====================================
+// 👥 ONLINE USERS
+// =====================================
+socket.on("onlineUsers", (userList) => {
+    console.log("Online users:", userList);
+    const usersBox = document.getElementById("users");
+    if (usersBox) {
+        usersBox.innerHTML = "";
+        userList.forEach(user => {
+            if (user !== userId) {
+                const div = document.createElement("div");
+                div.innerText = "🟢 " + user;
+                usersBox.appendChild(div);
+            }
+        });
+    }
+});
+
+// =====================================
+// 📊 PROGRESS UPDATE (from backend)
+// =====================================
+socket.on("progressUpdate", ({ userId: uid, progress }) => {
+    console.log(uid + " progress:", progress);
+    // Reload tasks to reflect the update
+    loadTasks();
+});
+
+// =====================================
+// 📅 CALENDAR SETUP
+// =====================================
+function updateCalendar(tasks) {
+    const calendarEl = document.getElementById("calendar");
+    if (!calendarEl) return;
+
+    try {
+        if (!calendar) {
+            // Initialize calendar once
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: "dayGridMonth",
+                plugins: ["dayGrid", "interaction"],
+                headerToolbar: {
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth"
+                },
+                height: "auto",
+                contentHeight: "auto",
+                events: tasks.map(task => ({
+                    title: task.completed ? "✅ " + task.text : "⭕ " + task.text,
+                    date: task.date,
+                    backgroundColor: task.completed ? "#84fab0" : "#667eea",
+                    borderColor: task.completed ? "#11998e" : "#764ba2"
+                }))
+            });
+
+            calendar.render();
+            console.log("Calendar initialized");
+        } else {
+            // Update events if calendar exists
+            calendar.removeAllEvents();
+            calendar.addEventSource(
+                tasks.map(task => ({
+                    title: task.completed ? "✅ " + task.text : "⭕ " + task.text,
+                    date: task.date,
+                    backgroundColor: task.completed ? "#84fab0" : "#667eea",
+                    borderColor: task.completed ? "#11998e" : "#764ba2"
+                }))
+            );
+            console.log("Calendar updated");
+        }
+    } catch (e) {
+        console.error("Calendar error:", e);
+    }
+}
 
 // =====================================
 // 🚀 INIT

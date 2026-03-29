@@ -41,6 +41,17 @@
                     >
                 </div>
 
+                <div class="form-group">
+                    <label for="login-password" class="form-label">Password</label>
+                    <input 
+                        id="login-password" 
+                        type="password"
+                        class="form-input" 
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                    >
+                </div>
+
                 <button 
                     type="button"
                     onclick="handleLogin()" 
@@ -67,6 +78,28 @@
                     >
                 </div>
 
+                <div class="form-group">
+                    <label for="register-password" class="form-label">Password</label>
+                    <input 
+                        id="register-password" 
+                        type="password"
+                        class="form-input" 
+                        placeholder="Create a password"
+                        autocomplete="new-password"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="register-confirm" class="form-label">Confirm Password</label>
+                    <input 
+                        id="register-confirm" 
+                        type="password"
+                        class="form-input" 
+                        placeholder="Confirm your password"
+                        autocomplete="new-password"
+                    >
+                </div>
+
                 <button 
                     type="button"
                     onclick="handleRegister()" 
@@ -87,6 +120,9 @@
 </div>
 
 <script>
+// Get BASE_URL (auto-production safe)
+const BASE_URL = window.location.origin;
+
 // ================== TAB SWITCHING ==================
 function switchTab(tab) {
     // Update tab buttons
@@ -112,27 +148,53 @@ function clearMessages() {
 }
 
 // ================== LOGIN HANDLER ==================
-function handleLogin() {
+async function handleLogin() {
     const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value.trim();
     const messageEl = document.getElementById('login-message');
 
-    if (!username) {
-        showMessage(messageEl, "Please enter your username", "error");
+    if (!username || !password) {
+        showMessage(messageEl, "Please enter username and password", "error");
         return;
     }
 
-    // Store in localStorage and redirect (preserving existing behavior)
-    localStorage.setItem("userId", username);
-    window.location.href = "dashboard.html";
+    try {
+        const res = await fetch(`${BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (!data.username) {
+            showMessage(messageEl, data.message || "Login failed", "error");
+            return;
+        }
+
+        // Store username in localStorage and redirect
+        localStorage.setItem("userId", data.username);
+        showMessage(messageEl, "✓ Login successful! Redirecting...", "success");
+        
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 600);
+
+    } catch (e) {
+        console.error("Login error:", e);
+        showMessage(messageEl, "Error: " + e.message, "error");
+    }
 }
 
 // ================== REGISTER HANDLER ==================
-function handleRegister() {
+async function handleRegister() {
     const username = document.getElementById("register-username").value.trim();
+    const password = document.getElementById("register-password").value.trim();
+    const confirm = document.getElementById("register-confirm").value.trim();
     const messageEl = document.getElementById('register-message');
 
-    if (!username) {
-        showMessage(messageEl, "Please enter a username", "error");
+    if (!username || !password || !confirm) {
+        showMessage(messageEl, "Please fill in all fields", "error");
         return;
     }
 
@@ -141,14 +203,48 @@ function handleRegister() {
         return;
     }
 
-    // Store in localStorage (frontend registration)
-    localStorage.setItem("userId", username);
-    showMessage(messageEl, "✓ Account registered successfully! Redirecting...", "success");
+    if (password.length < 6) {
+        showMessage(messageEl, "Password must be at least 6 characters", "error");
+        return;
+    }
 
-    // Clear input and redirect to dashboard after 1.5 seconds
-    setTimeout(() => {
-        window.location.href = "dashboard.html";
-    }, 1500);
+    if (password !== confirm) {
+        showMessage(messageEl, "Passwords do not match", "error");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${BASE_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (data.message && data.message.includes("already exists")) {
+            showMessage(messageEl, data.message, "error");
+            return;
+        }
+
+        showMessage(messageEl, "✓ Account created! Switching to Login tab...", "success");
+        
+        // Clear inputs
+        document.getElementById("register-username").value = "";
+        document.getElementById("register-password").value = "";
+        document.getElementById("register-confirm").value = "";
+
+        // Switch to login after 1 second
+        setTimeout(() => {
+            switchTab('login');
+            document.getElementById("login-username").value = username;
+            document.getElementById("login-password").focus();
+        }, 1000);
+
+    } catch (e) {
+        console.error("Register error:", e);
+        showMessage(messageEl, "Error: " + e.message, "error");
+    }
 }
 
 // ================== MESSAGE DISPLAY ==================
@@ -156,6 +252,29 @@ function showMessage(element, text, type) {
     element.textContent = text;
     element.className = `message ${type}`;
 }
+
+// Allow Enter key to submit forms
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('login-username').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleLogin();
+    });
+
+    document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleLogin();
+    });
+    
+    document.getElementById('register-username').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') document.getElementById('register-password').focus();
+    });
+
+    document.getElementById('register-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') document.getElementById('register-confirm').focus();
+    });
+
+    document.getElementById('register-confirm').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleRegister();
+    });
+});
 </script>
 
 </body>
