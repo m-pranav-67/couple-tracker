@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
+const path = require("path"); // ✅ ADDED
 
 const Message = require("./models/Message");
 
@@ -16,6 +17,8 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, "../frontend"))); // ✅ ADDED
 
 // =======================
 // ROUTES
@@ -47,18 +50,14 @@ let users = {}; // { username: socketId }
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    // 🔗 JOIN
     socket.on("join", (username) => {
         if (!username) return;
 
         users[username] = socket.id;
-
         console.log("Users:", users);
-
         io.emit("onlineUsers", Object.keys(users));
     });
 
-    // 🌐 PUBLIC CHAT
     socket.on("publicMessage", async ({ sender, msg }) => {
         if (!sender || !msg) return;
 
@@ -75,14 +74,12 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 💬 PRIVATE CHAT
     socket.on("sendMessage", async ({ sender, receiver, msg }) => {
         if (!sender || !receiver || !msg) return;
 
         try {
             await Message.create({ sender, receiver, message: msg });
 
-            // SEND TO RECEIVER
             if (users[receiver]) {
                 io.to(users[receiver]).emit("receiveMessage", {
                     sender,
@@ -90,7 +87,6 @@ io.on("connection", (socket) => {
                 });
             }
 
-            // SEND BACK TO SENDER
             socket.emit("receiveMessage", {
                 sender,
                 msg
@@ -101,13 +97,11 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 🏁 RACE PROGRESS (REAL-TIME SYNC)
     socket.on("raceProgress", ({ userId, partnerName, progress }) => {
         if (!userId || !partnerName) return;
 
         console.log(`${userId} progress: ${progress}`);
 
-        // SEND TO PARTNER
         if (users[partnerName]) {
             io.to(users[partnerName]).emit("raceProgress", {
                 userId,
@@ -115,14 +109,12 @@ io.on("connection", (socket) => {
             });
         }
 
-        // ALSO BROADCAST (SAFE FALLBACK)
         socket.broadcast.emit("raceProgress", {
             userId,
             progress
         });
     });
 
-    // ❌ DISCONNECT
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
 
@@ -134,6 +126,11 @@ io.on("connection", (socket) => {
 
         io.emit("onlineUsers", Object.keys(users));
     });
+});
+
+// ✅ ADDED (serve homepage)
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
 // =======================
