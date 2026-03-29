@@ -38,11 +38,17 @@ async function addTask() {
     if (!text) return alert("Enter a task");
 
     try {
-        await fetch(`${BASE_URL}/tasks/add`, {
+        const res = await fetch(`${BASE_URL}/api/tasks`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, text, date: selectedDate })
         });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            alert(data.error || "Error adding task");
+            return;
+        }
 
         document.getElementById("taskInput").value = "";
         await loadTasks();
@@ -57,11 +63,17 @@ async function addTask() {
 // =====================================
 async function completeTask(index) {
     try {
-        await fetch(`${BASE_URL}/tasks/complete`, {
+        const res = await fetch(`${BASE_URL}/api/tasks/complete`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, index })
         });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            alert(data.error || "Error completing task");
+            return;
+        }
 
         await loadTasks();
     } catch (e) {
@@ -74,11 +86,17 @@ async function completeTask(index) {
 // =====================================
 async function deleteTask(index) {
     try {
-        await fetch(`${BASE_URL}/tasks/delete`, {
+        const res = await fetch(`${BASE_URL}/api/tasks/delete`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, index })
         });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            alert(data.error || "Error deleting task");
+            return;
+        }
 
         await loadTasks();
     } catch (e) {
@@ -91,10 +109,19 @@ async function deleteTask(index) {
 // =====================================
 async function loadTasks() {
     try {
-        const res = await fetch(`${BASE_URL}/tasks/${userId}`);
-        const tasks = await res.json();
+        const res = await fetch(`${BASE_URL}/api/tasks/${userId}`);
+        
+        if (!res.ok) {
+            console.error("Failed to load tasks:", res.status);
+            return;
+        }
+
+        const data = await res.json();
+        const tasks = data.tasks || data || [];
 
         const container = document.getElementById("taskList");
+        if (!container) return;
+
         container.innerHTML = "";
 
         tasks.forEach((task, index) => {
@@ -208,14 +235,21 @@ function checkWinner(user, position) {
 // =====================================
 async function loadRace() {
     try {
-        const res = await fetch(`${BASE_URL}/race/${userId}`);
+        const res = await fetch(`${BASE_URL}/api/race/${userId}`);
+        
+        if (!res.ok) {
+            console.error("Failed to load race:", res.status);
+            return;
+        }
+
         const data = await res.json();
 
         if (!data || !data.user1) return;
 
         raceData = data;
         gameOver = false;
-        document.getElementById("winner").innerText = "";
+        const winnerEl = document.getElementById("winner");
+        if (winnerEl) winnerEl.innerText = "";
 
         const partner = data.user1 === userId ? data.user2 : data.user1;
         partnerName = partner;
@@ -241,7 +275,7 @@ async function createRace() {
     if (partner === userId) return alert("Cannot race yourself");
 
     try {
-        const res = await fetch(`${BASE_URL}/race/create`, {
+        const res = await fetch(`${BASE_URL}/api/race/create`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user1: userId, user2: partner })
@@ -285,21 +319,30 @@ function showProgress(tasks) {
 // =====================================
 async function loadOthers() {
     try {
-        const res = await fetch(`${BASE_URL}/tasks/all/users`);
-        const users = await res.json();
+        const res = await fetch(`${BASE_URL}/api/users/leaderboard`);
+        
+        if (!res.ok) {
+            console.error("Failed to load leaderboard:", res.status);
+            return;
+        }
+
+        const data = await res.json();
+        const users = data.users || data || [];
 
         const box = document.getElementById("others");
+        if (!box) return;
+
         box.innerHTML = "";
 
         users.sort((a, b) =>
-            b.tasks.filter(t => t.completed).length -
-            a.tasks.filter(t => t.completed).length
+            (b.tasks ? b.tasks.filter(t => t.completed).length : 0) -
+            (a.tasks ? a.tasks.filter(t => t.completed).length : 0)
         );
 
         users.forEach((u, idx) => {
-            const done = u.tasks.filter(t => t.completed).length;
+            const done = u.tasks ? u.tasks.filter(t => t.completed).length : 0;
             const div = document.createElement("div");
-            div.innerHTML = `<span>#${idx + 1} ${u.userId}</span><span>${done} done</span>`;
+            div.innerHTML = `<span>#${idx + 1} ${u.userId || u.username}</span><span>${done} done</span>`;
             box.appendChild(div);
         });
 
@@ -375,16 +418,18 @@ socket.on("progressUpdate", ({ userId: uid, progress }) => {
 // =====================================
 // 📅 CALENDAR SETUP
 // =====================================
+// 📅 CALENDAR SETUP
+// =====================================
 function updateCalendar(tasks) {
     const calendarEl = document.getElementById("calendar");
     if (!calendarEl) return;
 
     try {
-        if (!calendar) {
+        if (!calendar && window.FullCalendar) {
             // Initialize calendar once
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: "dayGridMonth",
-                plugins: ["dayGrid", "interaction"],
+                plugins: ["dayGrid"],
                 headerToolbar: {
                     left: "prev,next today",
                     center: "title",
@@ -402,18 +447,17 @@ function updateCalendar(tasks) {
 
             calendar.render();
             console.log("Calendar initialized");
-        } else {
+        } else if (calendar && window.FullCalendar) {
             // Update events if calendar exists
             calendar.removeAllEvents();
-            calendar.addEventSource(
-                tasks.map(task => ({
-                    title: task.completed ? "✅ " + task.text : "⭕ " + task.text,
-                    date: task.date,
-                    backgroundColor: task.completed ? "#84fab0" : "#667eea",
-                    borderColor: task.completed ? "#11998e" : "#764ba2"
-                }))
-            );
-            console.log("Calendar updated");
+            const eventSource = tasks.map(task => ({
+                title: task.completed ? "✅ " + task.text : "⭕ " + task.text,
+                date: task.date,
+                backgroundColor: task.completed ? "#84fab0" : "#667eea",
+                borderColor: task.completed ? "#11998e" : "#764ba2"
+            }));
+            calendar.addEventSource(eventSource);
+            console.log("Calendar updated with " + eventSource.length + " events");
         }
     } catch (e) {
         console.error("Calendar error:", e);

@@ -159,7 +159,7 @@ async function handleLoginTab() {
     }
 
     try {
-        const res = await fetch(`${BASE_URL}/auth/login`, {
+        const res = await fetch(`${BASE_URL}/api/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
@@ -167,8 +167,9 @@ async function handleLoginTab() {
 
         const data = await res.json();
 
-        if (!data.username) {
-            showMessage(messageEl, data.message || "Login failed", "error");
+        if (!res.ok || data.error || !data.username) {
+            showMessage(messageEl, data.error || data.message || "Login failed", "error");
+            console.error("Login failed:", data);
             return;
         }
 
@@ -214,7 +215,7 @@ async function handleRegisterTab() {
     }
 
     try {
-        const res = await fetch(`${BASE_URL}/auth/register`, {
+        const res = await fetch(`${BASE_URL}/api/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
@@ -222,8 +223,9 @@ async function handleRegisterTab() {
 
         const data = await res.json();
 
-        if (data.message && data.message.includes("already exists")) {
-            showMessage(messageEl, data.message, "error");
+        if (!res.ok || data.error) {
+            showMessage(messageEl, data.error || data.message || "Registration failed", "error");
+            console.error("Register failed:", data);
             return;
         }
 
