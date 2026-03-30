@@ -1,41 +1,135 @@
-// =====================================
-// 👤 USER + INITIALIZATION
-// =====================================
-const userId = localStorage.getItem("userId") || "Pranav";
-localStorage.setItem("userId", userId);
+// =============================================
+// 🔑 AUTH + INITIALIZATION
+// =============================================
+const userId = localStorage.getItem("userId");
+const token = localStorage.getItem("token");
+
+if (!userId || !token) {
+    if (window.location.pathname.includes("dashboard.html")) {
+        window.location.href = "index.html";
+    }
+}
 
 let selectedDate = new Date().toISOString().split("T")[0];
 let raceData = null;
-let partnerName = null;
-let calendar = null;
-
-// Game settings
-const FINISH = 500;
+let partnerName = localStorage.getItem("partner") || null;
+let calendarInstance = null;
 let gameOver = false;
+const FINISH_TASKS = 7; // tasks needed to win
 
-// =====================================
-// 🌐 BASE URL (AUTO PRODUCTION SAFE)
-// =====================================
 const BASE_URL = window.location.origin;
 
-// Socket (IMPORTANT FIX)
-const socket = io();
-socket.emit("join", userId);
+// =============================================
+// 🔌 SOCKET.IO SETUP
+// =============================================
+const socket = typeof io !== 'undefined' ? io() : null;
 
-// Set welcome
-document.addEventListener("DOMContentLoaded", () => {
+if (socket) {
+    socket.on("connect", () => {
+        console.log("✅ Socket connected:", socket.id);
+        socket.emit("join", userId);
+    });
+
+    socket.on("connect_error", (err) => {
+        console.error("❌ Socket connection error:", err.message);
+    });
+
+    socket.on("publicMessage", ({ sender, msg }) => {
+        appendPublicMessage(sender, msg);
+    });
+
+    socket.on("receiveMessage", ({ sender, msg, isMine }) => {
+        appendPrivateMessage(sender, msg, isMine);
+    });
+
+    socket.on("onlineUsers", (userList) => {
+        const usersBox = document.getElementById("users");
+        if (!usersBox) return;
+
+        usersBox.innerHTML = "";
+        const others = userList.filter(u => u !== userId);
+
+        if (others.length === 0) {
+            usersBox.innerHTML = `<span class="offline-msg">No one else online</span>`;
+            return;
+        }
+
+        others.forEach(user => {
+            const span = document.createElement("span");
+            span.className = "online-user";
+            span.innerText = "🟢 " + user;
+            usersBox.appendChild(span);
+        });
+    });
+
+    // 🏁 REAL-TIME RACE PROGRESS (from other user's task completion)
+    socket.on("raceProgressUpdate", ({ userId: uid, progress }) => {
+        if (uid === userId) return; // ignore own updates (already handled locally)
+
+        console.log(`🏁 Partner ${uid} progress: ${progress}`);
+
+        // Update race data
+        if (raceData) {
+            if (raceData.user1 === uid) raceData.progress1 = progress;
+            else if (raceData.user2 === uid) raceData.progress2 = progress;
+        }
+
+        setCarPosition("car-partner", progress, uid, false);
+
+        const partnerCountEl = document.getElementById("partner-progress-count");
+        if (partnerCountEl) partnerCountEl.textContent = `${progress} tasks done`;
+
+        if (progress >= FINISH_TASKS) {
+            triggerWinner(uid);
+        }
+    });
+}
+
+// =============================================
+// 🚀 DOM READY — INITIALIZATION
+// =============================================
+document.addEventListener("DOMContentLoaded", async () => {
+    // Only run on dashboard
+    if (!document.getElementById("taskList")) return;
+
+    // Set welcome text
     const welcomeEl = document.getElementById("welcome");
-    if (welcomeEl) {
-        welcomeEl.innerText = "Welcome " + userId;
+    if (welcomeEl) welcomeEl.innerText = `Welcome back, ${userId}! 👋`;
+
+    // Set car labels
+    const userCar = document.getElementById("car-user");
+    if (userCar) {
+        userCar.title = userId;
+    }
+    const labelUser = document.getElementById("label-user");
+    if (labelUser) labelUser.innerText = `🚗 ${userId}`;
+
+    // Load everything
+    await loadRace();
+    await loadTasks();
+    await loadPublicHistory();
+
+    // Load partner chat history if we have a partner
+    if (partnerName) {
+        await loadPrivateHistory(partnerName);
     }
 });
 
-// =====================================
-// ➕ ADD TASK
-// =====================================
+// =============================================
+// ➕ COMPLETE / ADD / DELETE TASKS
+// =============================================
 async function addTask() {
-    const text = document.getElementById("taskInput").value;
-    if (!text) return alert("Enter a task");
+    const input = document.getElementById("taskInput");
+    const text = input ? input.value.trim() : "";
+    const msgEl = document.getElementById("task-add-message");
+
+    if (!text) {
+        showInlineMsg(msgEl, "⚠️ Please enter a task first", "error");
+        return;
+    }
+
+    const btn = document.getElementById("add-task-btn");
+    if (btn) { btn.disabled = true; btn.textContent = "Adding..."; }
 
     try {
         const res = await fetch(`${BASE_URL}/api/tasks`, {
@@ -45,22 +139,25 @@ async function addTask() {
         });
 
         const data = await res.json();
+
         if (!res.ok || data.error) {
-            alert(data.error || "Error adding task");
+            showInlineMsg(msgEl, data.error || "Failed to add task", "error");
             return;
         }
 
-        document.getElementById("taskInput").value = "";
+        input.value = "";
+        showInlineMsg(msgEl, "✅ Task added!", "success");
+        setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 2000);
         await loadTasks();
+
     } catch (e) {
-        console.error("Error adding task:", e);
-        alert("Failed to add task");
+        console.error("Add task error:", e);
+        showInlineMsg(msgEl, "❌ Connection error", "error");
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "Add Task"; }
     }
 }
 
-// =====================================
-// ✅ COMPLETE TASK
-// =====================================
 async function completeTask(index) {
     try {
         const res = await fetch(`${BASE_URL}/api/tasks/complete`, {
@@ -70,20 +167,14 @@ async function completeTask(index) {
         });
 
         const data = await res.json();
-        if (!res.ok || data.error) {
-            alert(data.error || "Error completing task");
-            return;
-        }
+        if (!res.ok || data.error) return;
 
         await loadTasks();
     } catch (e) {
-        console.error("Error completing task:", e);
+        console.error("Complete task error:", e);
     }
 }
 
-// =====================================
-// 🗑 DELETE TASK
-// =====================================
 async function deleteTask(index) {
     try {
         const res = await fetch(`${BASE_URL}/api/tasks/delete`, {
@@ -93,186 +184,188 @@ async function deleteTask(index) {
         });
 
         const data = await res.json();
-        if (!res.ok || data.error) {
-            alert(data.error || "Error deleting task");
-            return;
-        }
+        if (!res.ok || data.error) return;
 
         await loadTasks();
     } catch (e) {
-        console.error("Error deleting task:", e);
+        console.error("Delete task error:", e);
     }
 }
 
-// =====================================
+// =============================================
 // 📥 LOAD TASKS
-// =====================================
+// =============================================
 async function loadTasks() {
     try {
         const res = await fetch(`${BASE_URL}/api/tasks/${userId}`);
-        
-        if (!res.ok) {
-            console.error("Failed to load tasks:", res.status);
-            return;
-        }
+        if (!res.ok) return;
 
-        const data = await res.json();
-        const tasks = data.tasks || data || [];
-
-        const container = document.getElementById("taskList");
-        if (!container) return;
-
-        container.innerHTML = "";
-
-        tasks.forEach((task, index) => {
-            if (task.date === selectedDate) {
-                const div = document.createElement("div");
-                const span = document.createElement("span");
-                span.innerText = task.text;
-
-                if (task.completed) {
-                    span.style.textDecoration = "line-through";
-                }
-
-                div.appendChild(span);
-
-                if (!task.completed) {
-                    const completeBtn = document.createElement("button");
-                    completeBtn.innerHTML = "✔";
-                    completeBtn.onclick = () => completeTask(index);
-                    completeBtn.className = "btn";
-                    div.appendChild(completeBtn);
-                } else {
-                    const checkmark = document.createElement("span");
-                    checkmark.innerText = "✅";
-                    div.appendChild(checkmark);
-                }
-
-                const deleteBtn = document.createElement("button");
-                deleteBtn.innerHTML = "🗑";
-                deleteBtn.onclick = () => deleteTask(index);
-                deleteBtn.className = "btn";
-                div.appendChild(deleteBtn);
-
-                container.appendChild(div);
-            }
-        });
-
-        updateMyCarPosition(tasks);
+        const tasks = await res.json();
+        renderTaskList(tasks);
+        updateProgress(tasks);
+        updateMyCarFromTasks(tasks);
         updateCalendar(tasks);
-        showProgress(tasks);
-        await loadOthers();
 
     } catch (e) {
-        console.error("Error loading tasks:", e);
+        console.error("Load tasks error:", e);
     }
 }
 
-// =====================================
-// 🚗 UPDATE CAR POSITION
-// =====================================
-function updateMyCarPosition(tasks) {
-    const done = tasks.filter(t => t.completed && t.date === selectedDate).length;
-    const pos = done * 80;
+function renderTaskList(tasks) {
+    const container = document.getElementById("taskList");
+    if (!container) return;
 
-    const car = document.getElementById("car-" + userId);
-    if (car) {
-        car.style.transform = `translateX(${pos}px)`;
-        car.innerText = "🚗 " + userId;
-        checkWinner(userId, pos);
+    const todayTasks = tasks.filter(t => t.date === selectedDate);
+
+    if (todayTasks.length === 0) {
+        container.innerHTML = `<div class="empty-state">No tasks for today — add one above! 👆</div>`;
+        return;
     }
 
-    if (raceData && partnerName) {
-        socket.emit("raceProgress", { userId, partnerName, progress: done });
+    container.innerHTML = "";
+
+    tasks.forEach((task, globalIndex) => {
+        if (task.date !== selectedDate) return;
+
+        const div = document.createElement("div");
+        div.className = `task-item${task.completed ? " completed" : ""}`;
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "task-text";
+        textSpan.innerText = task.text;
+        div.appendChild(textSpan);
+
+        const actions = document.createElement("div");
+        actions.className = "task-actions";
+
+        if (!task.completed) {
+            const completeBtn = document.createElement("button");
+            completeBtn.innerHTML = "✔ Done";
+            completeBtn.className = "task-btn complete-btn";
+            completeBtn.onclick = () => completeTask(globalIndex);
+            actions.appendChild(completeBtn);
+        } else {
+            const doneTag = document.createElement("span");
+            doneTag.className = "done-tag";
+            doneTag.innerText = "✅";
+            actions.appendChild(doneTag);
+        }
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerHTML = "🗑";
+        deleteBtn.className = "task-btn delete-btn";
+        deleteBtn.onclick = () => deleteTask(globalIndex);
+        actions.appendChild(deleteBtn);
+
+        div.appendChild(actions);
+        container.appendChild(div);
+    });
+}
+
+// =============================================
+// 📊 PROGRESS & CAR UPDATES
+// =============================================
+function updateProgress(tasks) {
+    const todayTasks = tasks.filter(t => t.date === selectedDate);
+    const done = todayTasks.filter(t => t.completed).length;
+    const total = todayTasks.length;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    const countEl = document.querySelector(".progress-count");
+    if (countEl) countEl.textContent = `${done}/${total}`;
+
+    const bar = document.getElementById("progress-bar");
+    if (bar) bar.style.width = pct + "%";
+}
+
+function updateMyCarFromTasks(tasks) {
+    const today = new Date().toISOString().split("T")[0];
+    const done = tasks.filter(t => t.date === today && t.completed).length;
+
+    setCarPosition("car-user", done, userId, true);
+
+    if (done >= FINISH_TASKS && !gameOver) {
+        triggerWinner(userId);
     }
 }
 
-// =====================================
-// 🏁 FIX CAR IDS
-// =====================================
-document.addEventListener("DOMContentLoaded", () => {
-    const myCar = document.getElementById("car-user");
-    if (myCar) {
-        myCar.id = "car-" + userId;
-        myCar.innerText = "🚗 " + userId;
+function setCarPosition(carId, progress, playerName, isMe) {
+    const trackWidth = document.querySelector(".race")?.clientWidth || 800;
+    const usableWidth = trackWidth - 120;
+    const pct = Math.min((progress || 0) / FINISH_TASKS, 1);
+    const xPos = 10 + Math.round(pct * usableWidth);
+
+    const carEl = document.getElementById(carId);
+    if (carEl) {
+        carEl.style.left = xPos + "px";
+        carEl.style.transform = "none";
     }
 
-    setTimeout(() => loadRace(), 100);
-});
-
-// =====================================
-// 🏁 PARTNER CAR MOVEMENT
-// =====================================
-socket.on("raceProgress", ({ userId: uid, progress }) => {
-    if (uid === userId) return;
-
-    const car = document.getElementById("car-" + uid);
-    if (car) {
-        const pos = progress * 80;
-        car.style.transform = `translateX(${pos}px)`;
-        checkWinner(uid, pos);
-    }
-});
-
-// =====================================
-// 🏆 CHECK WINNER
-// =====================================
-function checkWinner(user, position) {
-    if (gameOver) return;
-
-    if (position >= FINISH) {
-        gameOver = true;
-        const text = user === userId ? "🏆 You Win!" : `💔 ${user} Wins!`;
-        const winnerEl = document.getElementById("winner");
-        if (winnerEl) winnerEl.innerText = text;
-
-        setTimeout(() => alert(text), 200);
+    if (isMe) {
+        const userLabel = document.getElementById("user-progress-label");
+        if (userLabel) userLabel.textContent = `You: ${progress} tasks`;
+    } else {
+        const partnerLabel = document.getElementById("partner-progress-label");
+        if (partnerLabel) partnerLabel.textContent = `${playerName}: ${progress || 0} tasks`;
     }
 }
 
-// =====================================
-// 🏁 LOAD RACE
-// =====================================
+// =============================================
+// 🏁 LOAD AND CREATE RACE
+// =============================================
 async function loadRace() {
     try {
         const res = await fetch(`${BASE_URL}/api/race/${userId}`);
-        
-        if (!res.ok) {
-            console.error("Failed to load race:", res.status);
-            return;
-        }
+        if (!res.ok) return;
 
         const data = await res.json();
-
         if (!data || !data.user1) return;
 
         raceData = data;
-        gameOver = false;
-        const winnerEl = document.getElementById("winner");
-        if (winnerEl) winnerEl.innerText = "";
-
         const partner = data.user1 === userId ? data.user2 : data.user1;
         partnerName = partner;
+        localStorage.setItem("partner", partner);
 
+        // Update UI Context for Partner
         const partnerCar = document.getElementById("car-partner");
         if (partnerCar) {
-            partnerCar.id = "car-" + partner;
-            partnerCar.innerText = "🚙 " + partner;
+            partnerCar.title = partner;
+            partnerCar.textContent = "🚙";
         }
+        const labelPartner = document.getElementById("label-partner");
+        if (labelPartner) labelPartner.innerText = `🚙 ${partner}`;
+
+        const raceInfo = document.getElementById("current-race-info");
+        if (raceInfo) raceInfo.style.display = "block";
+        const raceVsText = document.getElementById("race-vs-text");
+        if (raceVsText) raceVsText.textContent = `${data.user1} vs ${data.user2}`;
+
+        // Set partner progress
+        const partnerProgress = data.user1 === userId ? data.progress2 : data.progress1;
+        setCarPosition("car-partner", partnerProgress, partner, false);
+        
+        // Unhide partner sections in Home
+        const partnerNameDisp = document.getElementById("partner-name-display");
+        if (partnerNameDisp) partnerNameDisp.textContent = partner;
+        const partnerProg = document.getElementById("partner-progress");
+        if (partnerProg) partnerProg.style.display = "block";
+
+        const partnerCountEl = document.getElementById("partner-progress-count");
+        if (partnerCountEl) partnerCountEl.textContent = `${partnerProgress || 0} tasks done`;
+
+        await loadPrivateHistory(partner);
 
     } catch (e) {
-        console.error("Race load error:", e);
+        console.error("Load race error:", e);
     }
 }
 
-// =====================================
-// 🏁 CREATE RACE
-// =====================================
 async function createRace() {
-    const partner = document.getElementById("partner").value;
+    const partner = document.getElementById("partner")?.value.trim();
+    const msgEl = document.getElementById("race-message");
 
-    if (!partner) return alert("Enter partner username");
-    if (partner === userId) return alert("Cannot race yourself");
+    if (!partner) { showInlineMsg(msgEl, "⚠️ Enter your partner's username", "error"); return; }
+    if (partner === userId) { showInlineMsg(msgEl, "⚠️ You cannot race yourself", "error"); return; }
 
     try {
         const res = await fetch(`${BASE_URL}/api/race/create`, {
@@ -284,192 +377,208 @@ async function createRace() {
         const data = await res.json();
 
         if (!res.ok || data.error) {
-            alert(data.error || "Error creating race");
-            console.error("Race creation error:", data);
+            showInlineMsg(msgEl, data.error || "Failed to create race", "error");
             return;
         }
 
-        alert("🏁 Race started!");
+        showInlineMsg(msgEl, `🏁 Race started! vs ${partner}`, "success");
         document.getElementById("partner").value = "";
+
         await loadRace();
         await loadTasks();
 
     } catch (e) {
-        console.error("Race creation error:", e);
-        alert("Error: " + e.message);
+        console.error("Create race error:", e);
+        showInlineMsg(msgEl, "❌ Connection error", "error");
     }
 }
 
-// =====================================
-// 📊 PROGRESS
-// =====================================
-function showProgress(tasks) {
-    const todayTasks = tasks.filter(t => t.date === selectedDate);
-    const done = todayTasks.filter(t => t.completed).length;
-    const total = todayTasks.length;
-
-    const progressEl = document.getElementById("progress");
-    if (progressEl) {
-        progressEl.innerHTML = `<span>${done}/${total} tasks completed</span>`;
+function triggerWinner(winnerUserId) {
+    if (gameOver) return;
+    gameOver = true;
+    const text = winnerUserId === userId ? "🏆 YOU WIN! Amazing job!" : `💔 ${winnerUserId} Wins! Keep going!`;
+    const winnerEl = document.getElementById("winner");
+    if (winnerEl) {
+        winnerEl.innerText = text;
+        winnerEl.style.display = "flex";
     }
 }
 
-// =====================================
+// =============================================
 // 👀 LEADERBOARD
-// =====================================
+// =============================================
 async function loadOthers() {
     try {
         const res = await fetch(`${BASE_URL}/api/users/leaderboard`);
-        
-        if (!res.ok) {
-            console.error("Failed to load leaderboard:", res.status);
-            return;
-        }
+        if (!res.ok) return;
 
         const data = await res.json();
-        const users = data.users || data || [];
-
         const box = document.getElementById("others");
         if (!box) return;
 
+        if (!data || data.length === 0) {
+            box.innerHTML = `<div class="empty-state">No data yet — complete some tasks to appear here! 🚀</div>`;
+            return;
+        }
+
         box.innerHTML = "";
+        data.forEach((u, idx) => {
+            const isMe = u.userId === userId;
+            const pct = u.total > 0 ? Math.round((u.completed / u.total) * 100) : 0;
+            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
 
-        users.sort((a, b) =>
-            (b.tasks ? b.tasks.filter(t => t.completed).length : 0) -
-            (a.tasks ? a.tasks.filter(t => t.completed).length : 0)
-        );
-
-        users.forEach((u, idx) => {
-            const done = u.tasks ? u.tasks.filter(t => t.completed).length : 0;
             const div = document.createElement("div");
-            div.innerHTML = `<span>#${idx + 1} ${u.userId || u.username}</span><span>${done} done</span>`;
+            div.className = `leaderboard-item${isMe ? " leaderboard-me" : ""}`;
+            div.innerHTML = `
+                <div class="lb-rank">${medal}</div>
+                <div class="lb-info">
+                    <div class="lb-name">${u.userId}${isMe ? " <span class='you-tag'>YOU</span>" : ""}</div>
+                    <div class="lb-bar-wrap">
+                        <div class="lb-bar" style="width:${pct}%"></div>
+                    </div>
+                </div>
+                <div class="lb-stats">
+                    <div class="lb-today">${u.completed}/${u.total} today</div>
+                    <div class="lb-alltime">${u.allTimeCompleted} all-time</div>
+                </div>
+            `;
             box.appendChild(div);
         });
-
     } catch (e) {
-        console.error("Leaderboard error:", e);
+        console.error("Load leaderboard error:", e);
     }
 }
 
-// =====================================
+// =============================================
 // 💬 CHAT
-// =====================================
-function sendPublic() {
-    const msg = document.getElementById("publicMsg").value;
-    if (!msg) return;
-
-    socket.emit("publicMessage", { sender: userId, msg });
-    document.getElementById("publicMsg").value = "";
+// =============================================
+async function loadPublicHistory() {
+    try {
+        const res = await fetch(`${BASE_URL}/api/messages/public`);
+        if (!res.ok) return;
+        const messages = await res.json();
+        messages.forEach(m => appendPublicMessage(m.sender, m.message));
+    } catch (e) {
+        console.error("Load public history error:", e);
+    }
 }
 
-socket.on("publicMessage", (data) => {
-    const div = document.createElement("div");
-    div.innerHTML = `<b>${data.sender}:</b> ${data.msg}`;
-    document.getElementById("publicMessages").appendChild(div);
-    // Auto scroll to latest message
-    document.getElementById("publicMessages").scrollTop = document.getElementById("publicMessages").scrollHeight;
-});
+async function loadPrivateHistory(partner) {
+    try {
+        const res = await fetch(`${BASE_URL}/api/messages/${userId}/${partner}`);
+        if (!res.ok) return;
+        const box = document.getElementById("messages");
+        if (box) box.innerHTML = ""; // Clear existing
+        const messages = await res.json();
+        messages.forEach(m => appendPrivateMessage(m.sender, m.message, m.sender === userId));
+    } catch (e) {
+        console.error("Load private history error:", e);
+    }
+}
+
+function sendPublic() {
+    const input = document.getElementById("publicMsg");
+    const msg = input ? input.value.trim() : "";
+    if (!msg || !socket) return;
+    socket.emit("publicMessage", { sender: userId, msg });
+    input.value = "";
+}
 
 function sendMsg() {
-    const receiver = document.getElementById("receiver").value;
-    const msg = document.getElementById("msg").value;
-
-    if (!msg || !receiver) return alert("Enter receiver and message");
-
-    socket.emit("sendMessage", { sender: userId, receiver, msg });
-    document.getElementById("msg").value = "";
+    const input = document.getElementById("msg");
+    const msg = input ? input.value.trim() : "";
+    if (!msg) return;
+    if (!partnerName) {
+        alert("⚠️ You need to start a race first to chat with your partner!");
+        return;
+    }
+    if (socket) socket.emit("sendMessage", { sender: userId, receiver: partnerName, msg });
+    input.value = "";
 }
 
-socket.on("receiveMessage", (data) => {
+function appendPublicMessage(sender, msg) {
+    const box = document.getElementById("publicMessages");
+    if (!box) return;
     const div = document.createElement("div");
-    div.innerHTML = `<b>${data.sender}:</b> ${data.msg}`;
-    document.getElementById("messages").appendChild(div);
-    // Auto scroll to latest message
-    document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
-});
+    div.className = `chat-msg${sender === userId ? " mine" : " theirs"}`;
+    div.innerHTML = `<span class="chat-sender">${sender}</span><span class="chat-text">${escapeHtml(msg)}</span>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
 
-// =====================================
-// 👥 ONLINE USERS
-// =====================================
-socket.on("onlineUsers", (userList) => {
-    console.log("Online users:", userList);
-    const usersBox = document.getElementById("users");
-    if (usersBox) {
-        usersBox.innerHTML = "";
-        userList.forEach(user => {
-            if (user !== userId) {
-                const div = document.createElement("div");
-                div.innerText = "🟢 " + user;
-                usersBox.appendChild(div);
-            }
-        });
-    }
-});
+function appendPrivateMessage(sender, msg, isMine = false) {
+    const box = document.getElementById("messages");
+    if (!box) return;
+    const isMyMsg = sender === userId || isMine;
+    const div = document.createElement("div");
+    div.className = `chat-msg${isMyMsg ? " mine" : " theirs"}`;
+    div.innerHTML = `<span class="chat-sender">${sender}</span><span class="chat-text">${escapeHtml(msg)}</span>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
 
-// =====================================
-// 📊 PROGRESS UPDATE (from backend)
-// =====================================
-socket.on("progressUpdate", ({ userId: uid, progress }) => {
-    console.log(uid + " progress:", progress);
-    // Reload tasks to reflect the update
-    loadTasks();
-});
-
-// =====================================
-// 📅 CALENDAR SETUP
-// =====================================
-// 📅 CALENDAR SETUP
-// =====================================
+// =============================================
+// 📅 CALENDAR
+// =============================================
 function updateCalendar(tasks) {
     const calendarEl = document.getElementById("calendar");
-    if (!calendarEl) return;
+    if (!calendarEl || typeof FullCalendar === "undefined") return;
 
-    try {
-        if (!calendar && window.FullCalendar) {
-            // Initialize calendar once
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: "dayGridMonth",
-                plugins: ["dayGrid"],
-                headerToolbar: {
-                    left: "prev,next today",
-                    center: "title",
-                    right: "dayGridMonth"
-                },
-                height: "auto",
-                contentHeight: "auto",
-                events: tasks.map(task => ({
-                    title: task.completed ? "✅ " + task.text : "⭕ " + task.text,
-                    date: task.date,
-                    backgroundColor: task.completed ? "#84fab0" : "#667eea",
-                    borderColor: task.completed ? "#11998e" : "#764ba2"
-                }))
-            });
+    const events = tasks.map(task => ({
+        title: (task.completed ? "✅ " : "⭕ ") + task.text,
+        date: task.date,
+        backgroundColor: task.completed ? "#11998e" : "#667eea",
+        borderColor: task.completed ? "#0d7a6e" : "#5568d3",
+        textColor: "#fff"
+    }));
 
-            calendar.render();
-            console.log("Calendar initialized");
-        } else if (calendar && window.FullCalendar) {
-            // Update events if calendar exists
-            calendar.removeAllEvents();
-            const eventSource = tasks.map(task => ({
-                title: task.completed ? "✅ " + task.text : "⭕ " + task.text,
-                date: task.date,
-                backgroundColor: task.completed ? "#84fab0" : "#667eea",
-                borderColor: task.completed ? "#11998e" : "#764ba2"
-            }));
-            calendar.addEventSource(eventSource);
-            console.log("Calendar updated with " + eventSource.length + " events");
-        }
-    } catch (e) {
-        console.error("Calendar error:", e);
+    if (!calendarInstance) {
+        calendarInstance = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            headerToolbar: {
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth"
+            },
+            height: "auto",
+            events: events,
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+            }
+        });
+        calendarInstance.render();
+        window.calendarInstance = calendarInstance;
+    } else {
+        calendarInstance.removeAllEvents();
+        events.forEach(ev => calendarInstance.addEvent(ev));
     }
 }
 
-// =====================================
-// 🚀 INIT
-// =====================================
+// =============================================
+// 🛠 HELPERS
+// =============================================
+function showInlineMsg(el, text, type) {
+    if (!el) return;
+    el.textContent = text;
+    el.className = `inline-message ${type}`;
+}
+
+function escapeHtml(str) {
+    const d = document.createElement("div");
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-        loadRace();
-        loadTasks();
-    }, 200);
+    const publicMsgInput = document.getElementById("publicMsg");
+    if (publicMsgInput) publicMsgInput.addEventListener("keypress", e => { if (e.key === "Enter") sendPublic(); });
+
+    const msgInput = document.getElementById("msg");
+    if (msgInput) msgInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMsg(); });
+
+    const taskInput = document.getElementById("taskInput");
+    if (taskInput) taskInput.addEventListener("keypress", e => { if (e.key === "Enter") addTask(); });
+
+    const partnerInput = document.getElementById("partner");
+    if (partnerInput) partnerInput.addEventListener("keypress", e => { if (e.key === "Enter") createRace(); });
 });

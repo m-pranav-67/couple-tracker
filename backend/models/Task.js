@@ -4,7 +4,8 @@ const taskSchema = new mongoose.Schema({
     userId: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        index: true
     },
     tasks: [
         {
@@ -20,14 +21,13 @@ const taskSchema = new mongoose.Schema({
             completed: {
                 type: Boolean,
                 default: false
+            },
+            completedAt: {
+                type: Date,
+                default: null
             }
         }
     ]
-}, {
-    timestamps: true // 🔥 helps debugging & tracking
-});
-
-// 🔥 INDEX for faster lookup
-taskSchema.index({ userId: 1 });
+}, { timestamps: true });
 
 module.exports = mongoose.model("Task", taskSchema);

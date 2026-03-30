@@ -3,32 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Couple Tracker - Dashboard</title>
-
+    <title>🏁 Couple Race Tracker — Dashboard</title>
+    <meta name="description" content="Track your daily tasks and race your partner to the finish line!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
-    <!-- Calendar -->
+    <!-- FullCalendar v6 -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 </head>
 
 <body data-section="home">
 
-<!-- LOGIN CHECK (Redirect if not logged in) -->
+<!-- LOGIN CHECK -->
 <script>
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-        window.location.href = "index.html";
-    }
+    const _userId = localStorage.getItem("userId");
+    if (!_userId) window.location.href = "index.html";
 </script>
 
 <!-- 🧭 NAVBAR -->
 <nav class="navbar">
     <div class="navbar-brand">
-        <h1>🚗 Couple Race Tracker</h1>
+        <span class="brand-icon">🏎️</span>
+        <h1>Couple Race Tracker</h1>
     </div>
     <div class="navbar-menu">
-        <button class="nav-btn" data-section="home" onclick="navigateTo('home')">🏠 Home</button>
+        <button class="nav-btn active" data-section="home" onclick="navigateTo('home')">🏠 Home</button>
         <button class="nav-btn" data-section="race" onclick="navigateTo('race')">🏁 Race</button>
         <button class="nav-btn" data-section="leaderboard" onclick="navigateTo('leaderboard')">📊 Leaderboard</button>
         <button class="nav-btn" data-section="chat" onclick="navigateTo('chat')">💬 Chat</button>
@@ -40,27 +42,40 @@
 <!-- 🏠 HOME SECTION -->
 <section class="section" data-section-id="home">
     <div class="section-header">
-        <h2>🏠 Home</h2>
+        <h2>🏠 Dashboard</h2>
         <p id="welcome" class="welcome-text"></p>
     </div>
 
     <div class="card card-add-task">
         <h3>➕ Add New Task</h3>
         <div class="input-group">
-            <input id="taskInput" placeholder="Enter task" class="input-field">
-            <button onclick="addTask()" class="btn btn-primary">Add Task</button>
+            <input id="taskInput" placeholder="What do you want to accomplish today?" class="input-field">
+            <button onclick="addTask()" id="add-task-btn" class="btn btn-primary">Add Task</button>
         </div>
+        <div id="task-add-message" class="inline-message"></div>
     </div>
 
     <div class="tasks-grid">
         <div class="card">
             <h3>📋 Today's Tasks</h3>
-            <div id="taskList" class="task-list"></div>
+            <div id="taskList" class="task-list">
+                <div class="empty-state">No tasks yet — add one above! 👆</div>
+            </div>
         </div>
 
         <div class="card">
             <h3>📊 Your Progress</h3>
-            <div id="progress" class="progress"></div>
+            <div id="progress" class="progress-card">
+                <div class="progress-count">0/0</div>
+                <div class="progress-label">tasks completed today</div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="partner-progress" id="partner-progress" style="display:none">
+                    <div class="partner-label">🤝 Partner: <span id="partner-name-display">—</span></div>
+                    <div id="partner-progress-count" class="partner-count">0 tasks done</div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -72,24 +87,44 @@
     </div>
 
     <div class="card card-race-start">
-        <h3>🏁 Start a New Race</h3>
+        <h3>🏁 Challenge a Partner</h3>
+        <p class="card-desc">Enter your partner's username to create a race room. They must be registered!</p>
         <div class="input-group">
-            <input id="partner" placeholder="Enter partner username" class="input-field">
-            <button onclick="createRace()" class="btn btn-primary">Start Race</button>
+            <input id="partner" placeholder="Partner's username" class="input-field">
+            <button onclick="createRace()" class="btn btn-primary">Start Race 🚀</button>
+        </div>
+        <div id="race-message" class="inline-message"></div>
+        <div id="current-race-info" class="race-info" style="display:none">
+            <span class="race-badge">✅ Active Race: <strong id="race-vs-text"></strong></span>
         </div>
     </div>
 
     <div class="card card-race-track">
-        <h3>Race Track</h3>
+        <h3>🏎️ Live Race Track</h3>
+        <div class="race-labels">
+            <div class="race-label" id="label-user"></div>
+            <div class="race-label" id="label-partner"></div>
+        </div>
         <div class="race">
+            <!-- Lane lines -->
+            <div class="lane-line lane-1"></div>
+            <div class="lane-line lane-2"></div>
+
             <!-- Finish line -->
-            <div class="finish-line"></div>
+            <div class="finish-line">
+                <span class="finish-flag">🏁</span>
+            </div>
 
             <!-- Your car -->
-            <div id="car-user" class="car car-user"></div>
+            <div id="car-user" class="car car-user">🚗</div>
 
             <!-- Partner car -->
-            <div id="car-partner" class="car car-partner"></div>
+            <div id="car-partner" class="car car-partner">🚙</div>
+        </div>
+
+        <div class="race-progress-labels">
+            <div class="rpl" id="user-progress-label">You: 0 tasks</div>
+            <div class="rpl" id="partner-progress-label">Partner: 0 tasks</div>
         </div>
 
         <!-- Winner Banner -->
@@ -101,10 +136,13 @@
 <section class="section" data-section-id="leaderboard">
     <div class="section-header">
         <h2>📊 Leaderboard</h2>
+        <p class="welcome-text">Today's rankings based on completed tasks</p>
     </div>
 
     <div class="card">
-        <div id="others" class="leaderboard"></div>
+        <div id="others" class="leaderboard">
+            <div class="empty-state">No data yet — complete some tasks! 🚀</div>
+        </div>
     </div>
 </section>
 
@@ -120,26 +158,25 @@
             <h3>🌐 Public Chat</h3>
             <div id="publicMessages" class="messages-box"></div>
             <div class="input-group">
-                <input id="publicMsg" placeholder="Message everyone" class="input-field">
+                <input id="publicMsg" placeholder="Message everyone..." class="input-field">
                 <button onclick="sendPublic()" class="btn btn-primary">Send</button>
             </div>
         </div>
 
-        <!-- Private Chat -->
+        <!-- Private Chat with Partner -->
         <div class="card card-chat">
-            <h3>💬 Private Chat</h3>
-            
+            <h3>💬 Partner Chat</h3>
+
             <div class="users-box">
-                <strong>Online Users:</strong>
+                <strong>Online Now:</strong>
                 <div id="users" class="users-list"></div>
             </div>
 
             <div id="messages" class="messages-box"></div>
 
             <div class="input-group">
-                <input id="receiver" placeholder="Username" class="input-field">
-                <input id="msg" placeholder="Message" class="input-field">
-                <button onclick="sendMsg()" class="btn btn-primary">Send</button>
+                <input id="msg" placeholder="Message your partner..." class="input-field">
+                <button onclick="sendMsg()" class="btn btn-primary">Send 💌</button>
             </div>
         </div>
     </div>
@@ -148,7 +185,8 @@
 <!-- 📅 CALENDAR SECTION -->
 <section class="section" data-section-id="calendar">
     <div class="section-header">
-        <h2>📅 Calendar</h2>
+        <h2>📅 Task Calendar</h2>
+        <p class="welcome-text">Your task history across all days</p>
     </div>
 
     <div class="card card-calendar">
@@ -156,35 +194,35 @@
     </div>
 </section>
 
-<!-- SOCKET.IO -->
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<!-- Socket.IO served by same server -->
+<script src="/socket.io/socket.io.js"></script>
 
-<!-- NAVIGATION SCRIPT -->
+<!-- NAVIGATION -->
 <script>
+let calendarInstance = null;
+
 function navigateTo(section) {
     document.body.setAttribute("data-section", section);
-    
-    // Update active nav button
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.classList.remove("active");
-    });
-    document.querySelector(`[data-section="${section}"]`).classList.add("active");
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+    const activeBtn = document.querySelector(`[data-section="${section}"]`);
+    if (activeBtn) activeBtn.classList.add("active");
 
-    // Fix calendar rendering
-    if (section === "calendar" && window.calendar) {
-        setTimeout(() => calendar.updateSize(), 100);
+    // Trigger calendar re-render when navigating to it
+    if (section === "calendar" && calendarInstance) {
+        setTimeout(() => calendarInstance.updateSize(), 150);
+    }
+    // Reload leaderboard when viewing
+    if (section === "leaderboard") {
+        loadOthers();
     }
 }
 
 function logout() {
     localStorage.removeItem("userId");
+    localStorage.removeItem("token");
+    localStorage.removeItem("partner");
     window.location.href = "index.html";
 }
-
-// Set initial active button
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelector('[data-section="home"]').classList.add("active");
-});
 </script>
 
 <!-- MAIN SCRIPT -->

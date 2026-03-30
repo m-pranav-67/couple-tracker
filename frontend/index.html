@@ -1,7 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Couple Tracker - Login & Register</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 Couple Race Tracker — Login</title>
+    <meta name="description" content="Compete with your partner daily by completing tasks. Login or register to start racing!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="login-style.css">
 </head>
 <body>
@@ -12,7 +18,8 @@
     <div class="login-card">
         <!-- Header Section -->
         <div class="login-header">
-            <h1>🚗 Couple Race Tracker</h1>
+            <div class="logo-icon">🏎️</div>
+            <h1>Couple Race Tracker</h1>
             <p class="login-subtitle">Compete with your partner daily</p>
         </div>
 
@@ -24,7 +31,7 @@
             <button class="tab-btn" data-tab="register" onclick="switchTab('register')">
                 <span>Register</span>
             </button>
-            <div class="tab-indicator"></div>
+            <div class="tab-indicator" id="tabIndicator"></div>
         </div>
 
         <!-- Login Tab -->
@@ -32,32 +39,40 @@
             <form class="login-form" onsubmit="return false;">
                 <div class="form-group">
                     <label for="login-username" class="form-label">Username</label>
-                    <input 
-                        id="login-username" 
-                        type="text"
-                        class="form-input" 
-                        placeholder="Enter your username"
-                        autocomplete="username"
-                    >
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input 
+                            id="login-username" 
+                            type="text"
+                            class="form-input" 
+                            placeholder="Enter your username"
+                            autocomplete="username"
+                        >
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="login-password" class="form-label">Password</label>
-                    <input 
-                        id="login-password" 
-                        type="password"
-                        class="form-input" 
-                        placeholder="Enter your password"
-                        autocomplete="current-password"
-                    >
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            id="login-password" 
+                            type="password"
+                            class="form-input" 
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                        >
+                    </div>
                 </div>
 
                 <button 
                     type="button"
-                    onclick="handleLoginTab()" 
+                    id="login-btn"
+                    onclick="handleLogin()" 
                     class="btn btn-primary btn-full"
                 >
-                    Login
+                    <span class="btn-text">Login</span>
+                    <span class="btn-loading" style="display:none">⏳ Logging in...</span>
                 </button>
 
                 <div id="login-message" class="message"></div>
@@ -69,43 +84,54 @@
             <form class="register-form" onsubmit="return false;">
                 <div class="form-group">
                     <label for="register-username" class="form-label">Username</label>
-                    <input 
-                        id="register-username" 
-                        type="text"
-                        class="form-input" 
-                        placeholder="Choose your username"
-                        autocomplete="username"
-                    >
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input 
+                            id="register-username" 
+                            type="text"
+                            class="form-input" 
+                            placeholder="Choose your username (min 3 chars)"
+                            autocomplete="username"
+                        >
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="register-password" class="form-label">Password</label>
-                    <input 
-                        id="register-password" 
-                        type="password"
-                        class="form-input" 
-                        placeholder="Create a password"
-                        autocomplete="new-password"
-                    >
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            id="register-password" 
+                            type="password"
+                            class="form-input" 
+                            placeholder="Create a password (min 6 chars)"
+                            autocomplete="new-password"
+                        >
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="register-confirm" class="form-label">Confirm Password</label>
-                    <input 
-                        id="register-confirm" 
-                        type="password"
-                        class="form-input" 
-                        placeholder="Confirm your password"
-                        autocomplete="new-password"
-                    >
+                    <div class="input-wrapper">
+                        <span class="input-icon">✅</span>
+                        <input 
+                            id="register-confirm" 
+                            type="password"
+                            class="form-input" 
+                            placeholder="Confirm your password"
+                            autocomplete="new-password"
+                        >
+                    </div>
                 </div>
 
                 <button 
                     type="button"
-                    onclick="handleRegisterTab()" 
+                    id="register-btn"
+                    onclick="handleRegister()" 
                     class="btn btn-success btn-full"
                 >
-                    Create Account
+                    <span class="btn-text">Create Account</span>
+                    <span class="btn-loading" style="display:none">⏳ Creating account...</span>
                 </button>
 
                 <div id="register-message" class="message"></div>
@@ -120,43 +146,48 @@
 </div>
 
 <script>
-// Get BASE_URL (auto-production safe)
+// Redirect if already logged in
+const existingUser = localStorage.getItem("userId");
+if (existingUser) {
+    window.location.href = "dashboard.html";
+}
+
 const BASE_URL = window.location.origin;
 
 // ================== TAB SWITCHING ==================
 function switchTab(tab) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(`${tab}-tab`).classList.add('active');
 
-    // Clear messages
+    // Move indicator
+    const indicator = document.getElementById('tabIndicator');
+    if (tab === 'register') {
+        indicator.style.left = 'calc(50% + 2px)';
+    } else {
+        indicator.style.left = '4px';
+    }
+
     clearMessages();
 }
 
-// Clear all messages
 function clearMessages() {
     document.getElementById('login-message').innerHTML = '';
     document.getElementById('register-message').innerHTML = '';
 }
 
 // ================== LOGIN HANDLER ==================
-async function handleLoginTab() {
+async function handleLogin() {
     const username = document.getElementById("login-username").value.trim();
-    const password = document.getElementById("login-password").value.trim();
+    const password = document.getElementById("login-password").value;
     const messageEl = document.getElementById('login-message');
+    const btn = document.getElementById('login-btn');
 
-    if (!username || !password) {
-        showMessage(messageEl, "Please enter username and password", "error");
-        return;
-    }
+    if (!username) { showMessage(messageEl, "⚠️ Please enter your username", "error"); return; }
+    if (!password) { showMessage(messageEl, "⚠️ Please enter your password", "error"); return; }
+
+    setLoading(btn, true);
 
     try {
         const res = await fetch(`${BASE_URL}/api/login`, {
@@ -167,52 +198,41 @@ async function handleLoginTab() {
 
         const data = await res.json();
 
-        if (!res.ok || data.error || !data.username) {
-            showMessage(messageEl, data.error || data.message || "Login failed", "error");
-            console.error("Login failed:", data);
+        if (!res.ok || data.error) {
+            showMessage(messageEl, data.error || "Login failed", "error");
+            setLoading(btn, false);
             return;
         }
 
-        // Store username in localStorage and redirect
+        // Persist auth
         localStorage.setItem("userId", data.username);
-        showMessage(messageEl, "✓ Login successful! Redirecting...", "success");
-        
-        setTimeout(() => {
-            window.location.href = "dashboard.html";
-        }, 600);
+        if (data.token) localStorage.setItem("token", data.token);
+        if (data.partner) localStorage.setItem("partner", data.partner);
+
+        showMessage(messageEl, "✅ Login successful! Redirecting...", "success");
+        setTimeout(() => window.location.href = "dashboard.html", 600);
 
     } catch (e) {
         console.error("Login error:", e);
-        showMessage(messageEl, "Error: " + e.message, "error");
+        showMessage(messageEl, "❌ Connection error — is the server running?", "error");
+        setLoading(btn, false);
     }
 }
 
 // ================== REGISTER HANDLER ==================
-async function handleRegisterTab() {
+async function handleRegister() {
     const username = document.getElementById("register-username").value.trim();
-    const password = document.getElementById("register-password").value.trim();
-    const confirm = document.getElementById("register-confirm").value.trim();
+    const password = document.getElementById("register-password").value;
+    const confirm = document.getElementById("register-confirm").value;
     const messageEl = document.getElementById('register-message');
+    const btn = document.getElementById('register-btn');
 
-    if (!username || !password || !confirm) {
-        showMessage(messageEl, "Please fill in all fields", "error");
-        return;
-    }
+    if (!username || !password || !confirm) { showMessage(messageEl, "⚠️ Please fill in all fields", "error"); return; }
+    if (username.length < 3) { showMessage(messageEl, "⚠️ Username must be at least 3 characters", "error"); return; }
+    if (password.length < 6) { showMessage(messageEl, "⚠️ Password must be at least 6 characters", "error"); return; }
+    if (password !== confirm) { showMessage(messageEl, "⚠️ Passwords do not match", "error"); return; }
 
-    if (username.length < 3) {
-        showMessage(messageEl, "Username must be at least 3 characters", "error");
-        return;
-    }
-
-    if (password.length < 6) {
-        showMessage(messageEl, "Password must be at least 6 characters", "error");
-        return;
-    }
-
-    if (password !== confirm) {
-        showMessage(messageEl, "Passwords do not match", "error");
-        return;
-    }
+    setLoading(btn, true);
 
     try {
         const res = await fetch(`${BASE_URL}/api/register`, {
@@ -224,58 +244,50 @@ async function handleRegisterTab() {
         const data = await res.json();
 
         if (!res.ok || data.error) {
-            showMessage(messageEl, data.error || data.message || "Registration failed", "error");
-            console.error("Register failed:", data);
+            showMessage(messageEl, data.error || "Registration failed", "error");
+            setLoading(btn, false);
             return;
         }
 
-        showMessage(messageEl, "✓ Account created! Switching to Login tab...", "success");
-        
-        // Clear inputs
+        showMessage(messageEl, "✅ Account created! Switching to login...", "success");
         document.getElementById("register-username").value = "";
         document.getElementById("register-password").value = "";
         document.getElementById("register-confirm").value = "";
 
-        // Switch to login after 1 second
         setTimeout(() => {
             switchTab('login');
             document.getElementById("login-username").value = username;
             document.getElementById("login-password").focus();
         }, 1000);
 
+        setLoading(btn, false);
+
     } catch (e) {
         console.error("Register error:", e);
-        showMessage(messageEl, "Error: " + e.message, "error");
+        showMessage(messageEl, "❌ Connection error — is the server running?", "error");
+        setLoading(btn, false);
     }
 }
 
-// ================== MESSAGE DISPLAY ==================
+// ================== HELPERS ==================
 function showMessage(element, text, type) {
     element.textContent = text;
     element.className = `message ${type}`;
 }
 
-// Allow Enter key to submit forms
+function setLoading(btn, isLoading) {
+    btn.querySelector('.btn-text').style.display = isLoading ? 'none' : 'inline';
+    btn.querySelector('.btn-loading').style.display = isLoading ? 'inline' : 'none';
+    btn.disabled = isLoading;
+}
+
+// Enter key support
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('login-username').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') handleLoginTab();
-    });
-
-    document.getElementById('login-password').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') handleLoginTab();
-    });
-    
-    document.getElementById('register-username').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') document.getElementById('register-password').focus();
-    });
-
-    document.getElementById('register-password').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') document.getElementById('register-confirm').focus();
-    });
-
-    document.getElementById('register-confirm').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') handleRegisterTab();
-    });
+    document.getElementById('login-username').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
+    document.getElementById('login-password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
+    document.getElementById('register-username').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('register-password').focus(); });
+    document.getElementById('register-password').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('register-confirm').focus(); });
+    document.getElementById('register-confirm').addEventListener('keypress', e => { if (e.key === 'Enter') handleRegister(); });
 });
 </script>
 

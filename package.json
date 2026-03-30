@@ -1,19 +1,22 @@
 {
   "name": "couple-tracker",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Couple Task Race App - compete daily with your partner!",
+  "main": "backend/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.3.3",
     "socket.io": "^4.8.3"
   }
