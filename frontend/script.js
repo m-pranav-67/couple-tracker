@@ -19,12 +19,19 @@ const FINISH_TASKS = 7; // tasks needed to win
 
 const BASE_URL = window.location.origin;
 
+const getHeaders = () => ({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+});
+
 // =============================================
 // 🔌 SOCKET.IO SETUP
 // =============================================
-const socket = typeof io !== 'undefined' ? io() : null;
+let socket = null;
 
-if (socket) {
+if (typeof io !== 'undefined') {
+    socket = io();
+    
     socket.on("connect", () => {
         console.log("✅ Socket connected:", socket.id);
         socket.emit("join", userId);
@@ -64,52 +71,69 @@ if (socket) {
 
     // 🏁 REAL-TIME RACE PROGRESS (from other user's task completion)
     socket.on("raceProgressUpdate", ({ userId: uid, progress }) => {
-        if (uid === userId) return; // ignore own updates (already handled locally)
-
+        if (uid === userId) return; // ignore own updates (handled locally)
+        
         console.log(`🏁 Partner ${uid} progress: ${progress}`);
-
-        // Update race data
+        
         if (raceData) {
             if (raceData.user1 === uid) raceData.progress1 = progress;
             else if (raceData.user2 === uid) raceData.progress2 = progress;
         }
-
+        
         setCarPosition("car-partner", progress, uid, false);
-
+        
         const partnerCountEl = document.getElementById("partner-progress-count");
         if (partnerCountEl) partnerCountEl.textContent = `${progress} tasks done`;
-
-        if (progress >= FINISH_TASKS) {
-            triggerWinner(uid);
-        }
     });
 }
 
 // =============================================
-// 🚀 DOM READY — INITIALIZATION
+// 🚀 DOM READY — INITIALIZATION & LISTENERS
 // =============================================
 document.addEventListener("DOMContentLoaded", async () => {
     // Only run on dashboard
     if (!document.getElementById("taskList")) return;
 
+    // Attach Event Listeners Safely
+    const addTaskBtn = document.getElementById("add-task-btn");
+    if (addTaskBtn) addTaskBtn.addEventListener("click", addTask);
+
+    const createRaceBtn = document.querySelector(".card-race-start .btn-primary");
+    if (createRaceBtn) createRaceBtn.addEventListener("click", createRace);
+
+    const publicSendBtn = document.querySelector("#publicMsg").nextElementSibling;
+    if (publicSendBtn) publicSendBtn.addEventListener("click", sendPublic);
+
+    const privateSendBtn = document.querySelector("#msg").nextElementSibling;
+    if (privateSendBtn) privateSendBtn.addEventListener("click", sendMsg);
+
+    const publicMsgInput = document.getElementById("publicMsg");
+    if (publicMsgInput) publicMsgInput.addEventListener("keypress", e => { if (e.key === "Enter") sendPublic(); });
+
+    const msgInput = document.getElementById("msg");
+    if (msgInput) msgInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMsg(); });
+
+    const taskInput = document.getElementById("taskInput");
+    if (taskInput) taskInput.addEventListener("keypress", e => { if (e.key === "Enter") addTask(); });
+
+    const partnerInput = document.getElementById("partner");
+    if (partnerInput) partnerInput.addEventListener("keypress", e => { if (e.key === "Enter") createRace(); });
+
     // Set welcome text
     const welcomeEl = document.getElementById("welcome");
     if (welcomeEl) welcomeEl.innerText = `Welcome back, ${userId}! 👋`;
 
-    // Set car labels
     const userCar = document.getElementById("car-user");
-    if (userCar) {
-        userCar.title = userId;
-    }
+    if (userCar) userCar.title = userId;
+    
     const labelUser = document.getElementById("label-user");
     if (labelUser) labelUser.innerText = `🚗 ${userId}`;
 
-    // Load everything
+    // Initial Data Fetch
     await loadRace();
     await loadTasks();
     await loadPublicHistory();
 
-    // Load partner chat history if we have a partner
     if (partnerName) {
         await loadPrivateHistory(partnerName);
     }
@@ -134,12 +158,11 @@ async function addTask() {
     try {
         const res = await fetch(`${BASE_URL}/api/tasks`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getHeaders(),
             body: JSON.stringify({ userId, text, date: selectedDate })
         });
 
         const data = await res.json();
-
         if (!res.ok || data.error) {
             showInlineMsg(msgEl, data.error || "Failed to add task", "error");
             return;
@@ -149,7 +172,6 @@ async function addTask() {
         showInlineMsg(msgEl, "✅ Task added!", "success");
         setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 2000);
         await loadTasks();
-
     } catch (e) {
         console.error("Add task error:", e);
         showInlineMsg(msgEl, "❌ Connection error", "error");
@@ -162,13 +184,11 @@ async function completeTask(index) {
     try {
         const res = await fetch(`${BASE_URL}/api/tasks/complete`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getHeaders(),
             body: JSON.stringify({ userId, index })
         });
-
         const data = await res.json();
         if (!res.ok || data.error) return;
-
         await loadTasks();
     } catch (e) {
         console.error("Complete task error:", e);
@@ -179,13 +199,11 @@ async function deleteTask(index) {
     try {
         const res = await fetch(`${BASE_URL}/api/tasks/delete`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getHeaders(),
             body: JSON.stringify({ userId, index })
         });
-
         const data = await res.json();
         if (!res.ok || data.error) return;
-
         await loadTasks();
     } catch (e) {
         console.error("Delete task error:", e);
@@ -197,7 +215,9 @@ async function deleteTask(index) {
 // =============================================
 async function loadTasks() {
     try {
-        const res = await fetch(`${BASE_URL}/api/tasks/${userId}`);
+        const res = await fetch(`${BASE_URL}/api/tasks/${userId}`, {
+            headers: getHeaders()
+        });
         if (!res.ok) return;
 
         const tasks = await res.json();
@@ -205,7 +225,6 @@ async function loadTasks() {
         updateProgress(tasks);
         updateMyCarFromTasks(tasks);
         updateCalendar(tasks);
-
     } catch (e) {
         console.error("Load tasks error:", e);
     }
@@ -216,14 +235,12 @@ function renderTaskList(tasks) {
     if (!container) return;
 
     const todayTasks = tasks.filter(t => t.date === selectedDate);
-
     if (todayTasks.length === 0) {
         container.innerHTML = `<div class="empty-state">No tasks for today — add one above! 👆</div>`;
         return;
     }
 
     container.innerHTML = "";
-
     tasks.forEach((task, globalIndex) => {
         if (task.date !== selectedDate) return;
 
@@ -242,7 +259,7 @@ function renderTaskList(tasks) {
             const completeBtn = document.createElement("button");
             completeBtn.innerHTML = "✔ Done";
             completeBtn.className = "task-btn complete-btn";
-            completeBtn.onclick = () => completeTask(globalIndex);
+            completeBtn.addEventListener("click", () => completeTask(globalIndex));
             actions.appendChild(completeBtn);
         } else {
             const doneTag = document.createElement("span");
@@ -254,7 +271,7 @@ function renderTaskList(tasks) {
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = "🗑";
         deleteBtn.className = "task-btn delete-btn";
-        deleteBtn.onclick = () => deleteTask(globalIndex);
+        deleteBtn.addEventListener("click", () => deleteTask(globalIndex));
         actions.appendChild(deleteBtn);
 
         div.appendChild(actions);
@@ -291,7 +308,7 @@ function updateMyCarFromTasks(tasks) {
 
 function setCarPosition(carId, progress, playerName, isMe) {
     const trackWidth = document.querySelector(".race")?.clientWidth || 800;
-    const usableWidth = trackWidth - 120;
+    const usableWidth = trackWidth - 120; // 60px padding on each side
     const pct = Math.min((progress || 0) / FINISH_TASKS, 1);
     const xPos = 10 + Math.round(pct * usableWidth);
 
@@ -310,12 +327,25 @@ function setCarPosition(carId, progress, playerName, isMe) {
     }
 }
 
+function triggerWinner(winnerUserId) {
+    if (gameOver) return;
+    gameOver = true;
+    const text = winnerUserId === userId ? "🏆 YOU WIN! Amazing job!" : `💔 ${winnerUserId} Wins! Keep going!`;
+    const winnerEl = document.getElementById("winner");
+    if (winnerEl) {
+        winnerEl.innerText = text;
+        winnerEl.style.display = "flex";
+    }
+}
+
 // =============================================
 // 🏁 LOAD AND CREATE RACE
 // =============================================
 async function loadRace() {
     try {
-        const res = await fetch(`${BASE_URL}/api/race/${userId}`);
+        const res = await fetch(`${BASE_URL}/api/race/${userId}`, {
+            headers: getHeaders()
+        });
         if (!res.ok) return;
 
         const data = await res.json();
@@ -326,7 +356,6 @@ async function loadRace() {
         partnerName = partner;
         localStorage.setItem("partner", partner);
 
-        // Update UI Context for Partner
         const partnerCar = document.getElementById("car-partner");
         if (partnerCar) {
             partnerCar.title = partner;
@@ -344,7 +373,6 @@ async function loadRace() {
         const partnerProgress = data.user1 === userId ? data.progress2 : data.progress1;
         setCarPosition("car-partner", partnerProgress, partner, false);
         
-        // Unhide partner sections in Home
         const partnerNameDisp = document.getElementById("partner-name-display");
         if (partnerNameDisp) partnerNameDisp.textContent = partner;
         const partnerProg = document.getElementById("partner-progress");
@@ -370,12 +398,11 @@ async function createRace() {
     try {
         const res = await fetch(`${BASE_URL}/api/race/create`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getHeaders(),
             body: JSON.stringify({ user1: userId, user2: partner })
         });
 
         const data = await res.json();
-
         if (!res.ok || data.error) {
             showInlineMsg(msgEl, data.error || "Failed to create race", "error");
             return;
@@ -386,21 +413,9 @@ async function createRace() {
 
         await loadRace();
         await loadTasks();
-
     } catch (e) {
         console.error("Create race error:", e);
         showInlineMsg(msgEl, "❌ Connection error", "error");
-    }
-}
-
-function triggerWinner(winnerUserId) {
-    if (gameOver) return;
-    gameOver = true;
-    const text = winnerUserId === userId ? "🏆 YOU WIN! Amazing job!" : `💔 ${winnerUserId} Wins! Keep going!`;
-    const winnerEl = document.getElementById("winner");
-    if (winnerEl) {
-        winnerEl.innerText = text;
-        winnerEl.style.display = "flex";
     }
 }
 
@@ -409,7 +424,9 @@ function triggerWinner(winnerUserId) {
 // =============================================
 async function loadOthers() {
     try {
-        const res = await fetch(`${BASE_URL}/api/users/leaderboard`);
+        const res = await fetch(`${BASE_URL}/api/users/leaderboard`, {
+            headers: getHeaders()
+        });
         if (!res.ok) return;
 
         const data = await res.json();
@@ -454,9 +471,11 @@ async function loadOthers() {
 // =============================================
 async function loadPublicHistory() {
     try {
-        const res = await fetch(`${BASE_URL}/api/messages/public`);
+        const res = await fetch(`${BASE_URL}/api/messages/public`, { headers: getHeaders() });
         if (!res.ok) return;
         const messages = await res.json();
+        const box = document.getElementById("publicMessages");
+        if (box) box.innerHTML = "";
         messages.forEach(m => appendPublicMessage(m.sender, m.message));
     } catch (e) {
         console.error("Load public history error:", e);
@@ -465,10 +484,10 @@ async function loadPublicHistory() {
 
 async function loadPrivateHistory(partner) {
     try {
-        const res = await fetch(`${BASE_URL}/api/messages/${userId}/${partner}`);
+        const res = await fetch(`${BASE_URL}/api/messages/${userId}/${partner}`, { headers: getHeaders() });
         if (!res.ok) return;
         const box = document.getElementById("messages");
-        if (box) box.innerHTML = ""; // Clear existing
+        if (box) box.innerHTML = "";
         const messages = await res.json();
         messages.forEach(m => appendPrivateMessage(m.sender, m.message, m.sender === userId));
     } catch (e) {
@@ -569,16 +588,7 @@ function escapeHtml(str) {
     return d.innerHTML;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const publicMsgInput = document.getElementById("publicMsg");
-    if (publicMsgInput) publicMsgInput.addEventListener("keypress", e => { if (e.key === "Enter") sendPublic(); });
-
-    const msgInput = document.getElementById("msg");
-    if (msgInput) msgInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMsg(); });
-
-    const taskInput = document.getElementById("taskInput");
-    if (taskInput) taskInput.addEventListener("keypress", e => { if (e.key === "Enter") addTask(); });
-
-    const partnerInput = document.getElementById("partner");
-    if (partnerInput) partnerInput.addEventListener("keypress", e => { if (e.key === "Enter") createRace(); });
+// Ensure `leaderboard` data is fetched proactively when tab is clicked
+document.querySelectorAll(".nav-btn[data-section='leaderboard']").forEach(btn => {
+    btn.addEventListener("click", loadOthers);
 });

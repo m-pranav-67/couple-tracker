@@ -20,7 +20,8 @@
 <!-- LOGIN CHECK -->
 <script>
     const _userId = localStorage.getItem("userId");
-    if (!_userId) window.location.href = "index.html";
+    const _token = localStorage.getItem("token");
+    if (!_userId || !_token) window.location.href = "index.html";
 </script>
 
 <!-- 🧭 NAVBAR -->
@@ -50,7 +51,7 @@
         <h3>➕ Add New Task</h3>
         <div class="input-group">
             <input id="taskInput" placeholder="What do you want to accomplish today?" class="input-field">
-            <button onclick="addTask()" id="add-task-btn" class="btn btn-primary">Add Task</button>
+            <button id="add-task-btn" class="btn btn-primary">Add Task</button>
         </div>
         <div id="task-add-message" class="inline-message"></div>
     </div>
@@ -91,7 +92,7 @@
         <p class="card-desc">Enter your partner's username to create a race room. They must be registered!</p>
         <div class="input-group">
             <input id="partner" placeholder="Partner's username" class="input-field">
-            <button onclick="createRace()" class="btn btn-primary">Start Race 🚀</button>
+            <button class="btn btn-primary">Start Race 🚀</button>
         </div>
         <div id="race-message" class="inline-message"></div>
         <div id="current-race-info" class="race-info" style="display:none">
@@ -159,7 +160,7 @@
             <div id="publicMessages" class="messages-box"></div>
             <div class="input-group">
                 <input id="publicMsg" placeholder="Message everyone..." class="input-field">
-                <button onclick="sendPublic()" class="btn btn-primary">Send</button>
+                <button class="btn btn-primary">Send</button>
             </div>
         </div>
 
@@ -176,7 +177,7 @@
 
             <div class="input-group">
                 <input id="msg" placeholder="Message your partner..." class="input-field">
-                <button onclick="sendMsg()" class="btn btn-primary">Send 💌</button>
+                <button class="btn btn-primary">Send 💌</button>
             </div>
         </div>
     </div>
@@ -199,21 +200,14 @@
 
 <!-- NAVIGATION -->
 <script>
-let calendarInstance = null;
-
 function navigateTo(section) {
     document.body.setAttribute("data-section", section);
     document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
     const activeBtn = document.querySelector(`[data-section="${section}"]`);
     if (activeBtn) activeBtn.classList.add("active");
 
-    // Trigger calendar re-render when navigating to it
-    if (section === "calendar" && calendarInstance) {
-        setTimeout(() => calendarInstance.updateSize(), 150);
-    }
-    // Reload leaderboard when viewing
-    if (section === "leaderboard") {
-        loadOthers();
+    if (section === "calendar" && window.calendarInstance) {
+        setTimeout(() => window.calendarInstance.updateSize(), 150);
     }
 }
 

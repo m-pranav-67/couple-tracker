@@ -41,13 +41,7 @@
                     <label for="login-username" class="form-label">Username</label>
                     <div class="input-wrapper">
                         <span class="input-icon">👤</span>
-                        <input 
-                            id="login-username" 
-                            type="text"
-                            class="form-input" 
-                            placeholder="Enter your username"
-                            autocomplete="username"
-                        >
+                        <input id="login-username" type="text" class="form-input" placeholder="Enter your username" autocomplete="username">
                     </div>
                 </div>
 
@@ -55,22 +49,11 @@
                     <label for="login-password" class="form-label">Password</label>
                     <div class="input-wrapper">
                         <span class="input-icon">🔒</span>
-                        <input 
-                            id="login-password" 
-                            type="password"
-                            class="form-input" 
-                            placeholder="Enter your password"
-                            autocomplete="current-password"
-                        >
+                        <input id="login-password" type="password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
                     </div>
                 </div>
 
-                <button 
-                    type="button"
-                    id="login-btn"
-                    onclick="handleLogin()" 
-                    class="btn btn-primary btn-full"
-                >
+                <button type="button" id="login-btn" onclick="handleLogin()" class="btn btn-primary btn-full">
                     <span class="btn-text">Login</span>
                     <span class="btn-loading" style="display:none">⏳ Logging in...</span>
                 </button>
@@ -86,13 +69,7 @@
                     <label for="register-username" class="form-label">Username</label>
                     <div class="input-wrapper">
                         <span class="input-icon">👤</span>
-                        <input 
-                            id="register-username" 
-                            type="text"
-                            class="form-input" 
-                            placeholder="Choose your username (min 3 chars)"
-                            autocomplete="username"
-                        >
+                        <input id="register-username" type="text" class="form-input" placeholder="Choose your username (min 3 chars)" autocomplete="username">
                     </div>
                 </div>
 
@@ -100,13 +77,7 @@
                     <label for="register-password" class="form-label">Password</label>
                     <div class="input-wrapper">
                         <span class="input-icon">🔒</span>
-                        <input 
-                            id="register-password" 
-                            type="password"
-                            class="form-input" 
-                            placeholder="Create a password (min 6 chars)"
-                            autocomplete="new-password"
-                        >
+                        <input id="register-password" type="password" class="form-input" placeholder="Create a password (min 6 chars)" autocomplete="new-password">
                     </div>
                 </div>
 
@@ -114,22 +85,11 @@
                     <label for="register-confirm" class="form-label">Confirm Password</label>
                     <div class="input-wrapper">
                         <span class="input-icon">✅</span>
-                        <input 
-                            id="register-confirm" 
-                            type="password"
-                            class="form-input" 
-                            placeholder="Confirm your password"
-                            autocomplete="new-password"
-                        >
+                        <input id="register-confirm" type="password" class="form-input" placeholder="Confirm your password" autocomplete="new-password">
                     </div>
                 </div>
 
-                <button 
-                    type="button"
-                    id="register-btn"
-                    onclick="handleRegister()" 
-                    class="btn btn-success btn-full"
-                >
+                <button type="button" id="register-btn" onclick="handleRegister()" class="btn btn-success btn-full">
                     <span class="btn-text">Create Account</span>
                     <span class="btn-loading" style="display:none">⏳ Creating account...</span>
                 </button>
@@ -146,29 +106,27 @@
 </div>
 
 <script>
-// Redirect if already logged in
 const existingUser = localStorage.getItem("userId");
-if (existingUser) {
+const existingToken = localStorage.getItem("token");
+
+if (existingUser && existingToken) {
     window.location.href = "dashboard.html";
 }
 
 const BASE_URL = window.location.origin;
 
-// ================== TAB SWITCHING ==================
 function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(`${tab}-tab`).classList.add('active');
 
-    // Move indicator
     const indicator = document.getElementById('tabIndicator');
     if (tab === 'register') {
         indicator.style.left = 'calc(50% + 2px)';
     } else {
         indicator.style.left = '4px';
     }
-
     clearMessages();
 }
 
@@ -177,7 +135,6 @@ function clearMessages() {
     document.getElementById('register-message').innerHTML = '';
 }
 
-// ================== LOGIN HANDLER ==================
 async function handleLogin() {
     const username = document.getElementById("login-username").value.trim();
     const password = document.getElementById("login-password").value;
@@ -195,7 +152,6 @@ async function handleLogin() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
         });
-
         const data = await res.json();
 
         if (!res.ok || data.error) {
@@ -204,14 +160,13 @@ async function handleLogin() {
             return;
         }
 
-        // Persist auth
+        // Persist auth securely
         localStorage.setItem("userId", data.username);
         if (data.token) localStorage.setItem("token", data.token);
         if (data.partner) localStorage.setItem("partner", data.partner);
 
         showMessage(messageEl, "✅ Login successful! Redirecting...", "success");
         setTimeout(() => window.location.href = "dashboard.html", 600);
-
     } catch (e) {
         console.error("Login error:", e);
         showMessage(messageEl, "❌ Connection error — is the server running?", "error");
@@ -219,7 +174,6 @@ async function handleLogin() {
     }
 }
 
-// ================== REGISTER HANDLER ==================
 async function handleRegister() {
     const username = document.getElementById("register-username").value.trim();
     const password = document.getElementById("register-password").value;
@@ -259,9 +213,7 @@ async function handleRegister() {
             document.getElementById("login-username").value = username;
             document.getElementById("login-password").focus();
         }, 1000);
-
         setLoading(btn, false);
-
     } catch (e) {
         console.error("Register error:", e);
         showMessage(messageEl, "❌ Connection error — is the server running?", "error");
@@ -269,7 +221,6 @@ async function handleRegister() {
     }
 }
 
-// ================== HELPERS ==================
 function showMessage(element, text, type) {
     element.textContent = text;
     element.className = `message ${type}`;
@@ -281,7 +232,6 @@ function setLoading(btn, isLoading) {
     btn.disabled = isLoading;
 }
 
-// Enter key support
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('login-username').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
     document.getElementById('login-password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
